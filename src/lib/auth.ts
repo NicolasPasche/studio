@@ -1,4 +1,4 @@
-export type UserRole = "sales" | "admin" | "proposal" | "hr";
+export type UserRole = "sales" | "admin" | "proposal" | "hr" | "dev";
 
 export interface User {
   name: string;
@@ -11,30 +11,37 @@ export interface User {
 export const users: Record<UserRole, User> = {
   sales: {
     name: "Alex Johnson",
-    email: "alex.j@apex.com",
+    email: "sales@example.com",
     role: "sales",
     avatar: "/avatars/01.png",
     initials: "AJ",
   },
   admin: {
     name: "Maria Garcia",
-    email: "maria.g@apex.com",
+    email: "admin@example.com",
     role: "admin",
     avatar: "/avatars/02.png",
     initials: "MG",
   },
   proposal: {
     name: "David Chen",
-    email: "david.c@apex.com",
+    email: "proposal@example.com",
     role: "proposal",
     avatar: "/avatars/03.png",
     initials: "DC",
   },
   hr: {
     name: "Sarah Lee",
-    email: "sarah.l@apex.com",
+    email: "hr@example.com",
     role: "hr",
     avatar: "/avatars/04.png",
     initials: "SL",
   },
+  dev: {
+    name: "Dev User",
+    email: "nicolas.pasche@proton.me",
+    role: "dev",
+    avatar: "/avatars/05.png",
+    initials: "DV",
+  }
 };

@@ -21,8 +21,8 @@ import { AlertTriangle } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('sales@example.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('nicolas.pasche@proton.me');
+  const [password, setPassword] = useState('Bellw@ld2008');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 

@@ -11,6 +11,7 @@ import {
   Settings,
   Briefcase,
   Users2,
+  Code,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth";
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuSkeleton } from "@/components/ui/sidebar";
@@ -32,17 +33,20 @@ const navLinksByRole: Record<UserRole, { href: string; label: string; icon: Reac
   ],
   proposal: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard/proposal", label: "Assigned Leads", icon: Briefcase },
+    { href: "/opportunities", label: "Opportunities", icon: Target },
   ],
   hr: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/employees", label: "Employees", icon: Users2 },
   ],
+  dev: [
+     { href: "/dashboard/dev", label: "Dev Controls", icon: Code },
+  ]
 };
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, realUser } = useAuth();
   
   if (!user) {
      return (
@@ -52,7 +56,8 @@ export function SidebarNav() {
     );
   }
 
-  const links = navLinksByRole[user.role] || [];
+  const roleToDisplay = realUser?.role === 'dev' ? user.role : realUser?.role;
+  const links = navLinksByRole[roleToDisplay || 'sales'] || [];
   const allLinks = [...links, ...commonLinks];
 
   return (

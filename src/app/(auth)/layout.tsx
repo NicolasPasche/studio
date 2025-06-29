@@ -8,6 +8,7 @@ import { Header } from "@/components/header";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { Icons } from "@/components/icons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   SidebarProvider,
   Sidebar,
@@ -29,8 +30,10 @@ const handleLogout = async () => {
 };
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, realUser, loading, setImpersonatedRole } = useAuth();
   const router = useRouter();
+
+  const isImpersonating = realUser?.role === 'dev' && user?.role !== realUser?.role;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -52,6 +55,11 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     );
+  }
+  
+  const handleReturnToDevView = () => {
+    setImpersonatedRole(null);
+    router.push('/dashboard/dev');
   }
 
   return (
@@ -93,6 +101,12 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
       <SidebarInset>
         <div className="flex flex-col min-h-screen">
+           {isImpersonating && (
+              <div className="bg-yellow-400 text-black p-2 text-center text-sm flex justify-center items-center gap-4 z-50">
+                <span>You are viewing the app as a <strong className="capitalize">{user?.role}</strong>.</span>
+                <Button variant="link" className="text-black h-auto p-0 underline" onClick={handleReturnToDevView}>Return to Dev View</Button>
+              </div>
+            )}
           <Header />
           <main className="flex-1 p-4 md:p-6 lg:p-8 bg-secondary/30">
             {children}
