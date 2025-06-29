@@ -32,7 +32,7 @@ const navLinksByRole: Record<UserRole, { href: string; label: string; icon: Reac
   ],
   proposal: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/opportunities", label: "Assigned Leads", icon: Briefcase },
+    { href: "/dashboard/proposal", label: "Assigned Leads", icon: Briefcase },
   ],
   hr: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
