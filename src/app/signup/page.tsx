@@ -59,6 +59,7 @@ export default function SignUpPage() {
           break;
         case 'auth/network-request-failed':
         case 'auth/invalid-api-key':
+        case 'auth/api-key-not-valid':
         case 'auth/app-deleted':
         case 'auth/invalid-app-credential':
              message = "Network error or invalid configuration. Please check your internet connection and Firebase project setup in `src/lib/firebase.ts`.";

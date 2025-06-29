@@ -57,6 +57,7 @@ export default function LoginPage() {
           break;
         case 'auth/network-request-failed':
         case 'auth/invalid-api-key':
+        case 'auth/api-key-not-valid':
         case 'auth/app-deleted':
         case 'auth/invalid-app-credential':
           message =
