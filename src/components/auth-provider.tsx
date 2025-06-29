@@ -7,7 +7,6 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { User, UserRole, users as mockUsers } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export interface AuthContextType {
   user: User | null;
@@ -23,6 +22,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    // DEV BACKDOOR: Allow role simulation via query parameter
+    const searchParams = new URLSearchParams(window.location.search);
+    const devRole = searchParams.get("dev_role") as UserRole | null;
+
+    if (process.env.NODE_ENV === "development" && devRole && mockUsers[devRole]) {
+      console.log(`DEV MODE: Simulating login for role: ${devRole}`);
+      setUser(mockUsers[devRole]);
+      setLoading(false);
+      return; // Skip Firebase auth listener setup
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       setLoading(true);
       if (firebaseUser && firebaseUser.email) {
