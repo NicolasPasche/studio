@@ -36,9 +36,15 @@ export function Header() {
   const pathname = usePathname();
 
   const getPageTitle = () => {
-    const path = pathname.split("/").pop() || "dashboard";
-    if (path === 'capture') return 'Lead Capture';
-    return path.charAt(0).toUpperCase() + path.slice(1);
+    const segments = pathname.split("/").filter(Boolean);
+    const first = segments[0];
+    const last = segments[segments.length - 1];
+
+    if (first === "dashboard") return "Dashboard";
+    if (last === "capture") return "Lead Capture";
+    if (last) return last.charAt(0).toUpperCase() + last.slice(1);
+    
+    return "Dashboard";
   };
   
   return (
