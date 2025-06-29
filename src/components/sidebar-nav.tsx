@@ -50,7 +50,7 @@ export function SidebarNav() {
   return (
     <SidebarMenu className="gap-2 px-2">
       {allLinks.map((link) => {
-        const isActive = pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href));
+        const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
         return (
           <SidebarMenuItem key={link.href}>
             <SidebarMenuButton
