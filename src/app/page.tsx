@@ -1,6 +1,7 @@
 "use client"
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation'
+import Link from "next/link";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button"
@@ -83,9 +84,9 @@ export default function LoginPage() {
             </Button>
             <div className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
-              <a href="#" className="text-primary hover:underline">
+              <Link href="/signup" className="text-primary hover:underline">
                 Sign up
-              </a>
+              </Link>
             </div>
           </CardFooter>
         </form>
