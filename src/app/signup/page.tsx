@@ -44,11 +44,25 @@ export default function SignUpPage() {
       setSuccess(true);
     } catch (err: any) {
       console.error("Firebase Auth Error:", err);
-      if (err.code === 'auth/email-already-in-use') {
-        setError("This email address is already in use.");
-      } else {
-        setError("Failed to create an account. Please try again.");
+      let message = "Failed to create an account. Please try again.";
+      switch (err.code) {
+        case 'auth/email-already-in-use':
+          message = "This email address is already in use by another account.";
+          break;
+        case 'auth/invalid-email':
+          message = "The email address you entered is not valid.";
+          break;
+        case 'auth/operation-not-allowed':
+          message = "Account creation is not enabled. Please contact an administrator.";
+          break;
+        case 'auth/weak-password':
+          message = "The password is too weak. Please use at least 6 characters.";
+          break;
+        case 'auth/network-request-failed':
+             message = "Network error. Please check your internet connection and Firebase project configuration.";
+             break;
       }
+      setError(message);
     } finally {
       setLoading(false);
     }

@@ -38,7 +38,25 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (err: any) {
       console.error("Firebase Auth Error:", err);
-      setError("Failed to sign in. Please check your credentials.");
+      let message = "Failed to sign in. An unexpected error occurred.";
+      switch (err.code) {
+          case 'auth/invalid-email':
+              message = "The email address is not valid. Please check and try again.";
+              break;
+          case 'auth/invalid-credential':
+              message = "Invalid credentials. Please check your email and password.";
+              break;
+          case 'auth/user-disabled':
+              message = "This user account has been disabled.";
+              break;
+          case 'auth/network-request-failed':
+              message = "Network error. Please check your internet connection and Firebase project configuration.";
+              break;
+          default:
+              message = "Failed to sign in. Please check your credentials.";
+      }
+      setError(message);
+    } finally {
       setLoading(false);
     }
   }
