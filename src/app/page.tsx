@@ -38,34 +38,30 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Firebase Auth Error:', err);
-      let message = 'Failed to sign in. An unexpected error occurred.';
+      let message;
 
-      // Custom error for dev user if account doesn't exist
-      if (
-        err.code === 'auth/invalid-credential' &&
-        email === 'nicolas.pasche@proton.me'
-      ) {
-        message =
-          'Dev user not found. Please go to the Sign Up page to create the account first.';
-      } else {
-        switch (err.code) {
-          case 'auth/invalid-email':
+      switch (err.code) {
+        case 'auth/invalid-email':
+          message =
+            'The email address is not valid. Please check and try again.';
+          break;
+        case 'auth/invalid-credential':
+          if (email === 'nicolas.pasche@proton.me') {
             message =
-              'The email address is not valid. Please check and try again.';
-            break;
-          case 'auth/invalid-credential':
+              'Dev user not found. Please go to the Sign Up page to create the account first.';
+          } else {
             message = 'Invalid credentials. Please check your email and password.';
-            break;
-          case 'auth/user-disabled':
-            message = 'This user account has been disabled.';
-            break;
-          case 'auth/network-request-failed':
-            message =
-              'Network error. Please check your internet connection and Firebase project configuration.';
-            break;
-          default:
-            message = 'Failed to sign in. Please check your credentials.';
-        }
+          }
+          break;
+        case 'auth/user-disabled':
+          message = 'This user account has been disabled.';
+          break;
+        case 'auth/network-request-failed':
+          message =
+            'Network error. Please check your internet connection and Firebase project configuration.';
+          break;
+        default:
+          message = 'Failed to sign in. Please check your credentials.';
       }
       setError(message);
     } finally {
