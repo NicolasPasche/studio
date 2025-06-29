@@ -15,10 +15,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   
+  if (!user) {
+    return (
+       <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-1/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </CardHeader>
+        </Card>
+        <Skeleton className="h-96 w-full" />
+       </div>
+    );
+  }
+
   return (
     <div className="grid gap-6">
       <Card>

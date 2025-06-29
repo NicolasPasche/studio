@@ -13,7 +13,7 @@ import {
   Users2,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth";
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuSkeleton } from "@/components/ui/sidebar";
 
 const commonLinks = [
   { href: "/settings", label: "Settings", icon: Settings },
@@ -32,7 +32,7 @@ const navLinksByRole: Record<UserRole, { href: string; label: string; icon: Reac
   ],
   proposal: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard/proposal", label: "Assigned Leads", icon: Briefcase },
+    { href: "/opportunities", label: "Assigned Leads", icon: Briefcase },
   ],
   hr: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -44,13 +44,21 @@ export function SidebarNav() {
   const pathname = usePathname();
   const { user } = useAuth();
   
+  if (!user) {
+     return (
+        <SidebarMenu className="gap-2 px-2">
+            {[...Array(4)].map((_, i) => <SidebarMenuSkeleton key={i} showIcon />)}
+        </SidebarMenu>
+    );
+  }
+
   const links = navLinksByRole[user.role] || [];
   const allLinks = [...links, ...commonLinks];
 
   return (
     <SidebarMenu className="gap-2 px-2">
       {allLinks.map((link) => {
-        const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+        const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(`${link.href}/`));
         return (
           <SidebarMenuItem key={link.href}>
             <SidebarMenuButton

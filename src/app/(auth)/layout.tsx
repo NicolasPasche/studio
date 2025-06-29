@@ -1,9 +1,13 @@
 "use client";
 
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AuthProvider } from "@/components/auth-provider";
+import { useAuth } from "@/hooks/use-auth";
 import { Header } from "@/components/header";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { Icons } from "@/components/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   SidebarProvider,
   Sidebar,
@@ -17,6 +21,87 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+
+const handleLogout = async () => {
+  await signOut(auth);
+};
+
+function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="w-full max-w-4xl space-y-4 p-4">
+          <div className="grid grid-cols-4 gap-4">
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+          </div>
+          <Skeleton className="h-96" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <SidebarProvider>
+      <Sidebar
+        className="bg-sidebar text-sidebar-foreground border-r"
+        collapsible="icon"
+      >
+        <SidebarHeader className="p-4">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Icons.logo className="h-8 w-8 text-primary" />
+            <span className="text-xl font-semibold font-headline group-data-[state=collapsed]:hidden">
+              Apex Workflow
+            </span>
+          </Link>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarNav />
+        </SidebarContent>
+        <SidebarFooter className="p-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleLogout}
+                variant="ghost"
+                className="w-full justify-start"
+                tooltip={{
+                  children: "Logout",
+                  side: "right",
+                  align: "center",
+                }}
+              >
+                <LogOut />
+                <span>Logout</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1 p-4 md:p-6 lg:p-8 bg-secondary/30">
+            {children}
+          </main>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
 
 export default function AuthenticatedLayout({
   children,
@@ -25,43 +110,7 @@ export default function AuthenticatedLayout({
 }) {
   return (
     <AuthProvider>
-      <SidebarProvider>
-        <Sidebar className="bg-sidebar text-sidebar-foreground border-r" collapsible="icon">
-          <SidebarHeader className="p-4">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <Icons.logo className="h-8 w-8 text-primary" />
-              <span className="text-xl font-semibold font-headline group-data-[state=collapsed]:hidden">Apex Workflow</span>
-            </Link>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarNav />
-          </SidebarContent>
-          <SidebarFooter className="p-2">
-             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild variant="ghost" className="w-full justify-start" tooltip={{
-                  children: "Logout",
-                  side: "right",
-                  align: "center",
-                }}>
-                  <Link href="/">
-                    <LogOut />
-                    <span>Logout</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
-        </Sidebar>
-        <SidebarInset>
-            <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="flex-1 p-4 md:p-6 lg:p-8 bg-secondary/30">
-                    {children}
-                </main>
-            </div>
-        </SidebarInset>
-      </SidebarProvider>
+      <ProtectedLayout>{children}</ProtectedLayout>
     </AuthProvider>
   );
 }

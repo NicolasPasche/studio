@@ -11,41 +11,43 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuGroup,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSubContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
-import { UserRole } from "@/lib/auth";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LifeBuoy, LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
-const roleDisplayNames: Record<UserRole, string> = {
-  sales: "Sales",
-  admin: "Admin",
-  proposal: "Proposal",
-  hr: "HR",
+const handleLogout = async () => {
+  await signOut(auth);
 };
 
 export function Header() {
-  const { user, switchRole } = useAuth();
+  const { user } = useAuth();
   const pathname = usePathname();
 
   const getPageTitle = () => {
     const segments = pathname.split("/").filter(Boolean);
     const first = segments[0];
-    const last = segments[segments.length - 1];
-
+    
     if (first === "dashboard") return "Dashboard";
+
+    const last = segments[segments.length - 1];
     if (last === "capture") return "Lead Capture";
     if (last) return last.charAt(0).toUpperCase() + last.slice(1);
     
     return "Dashboard";
   };
+  
+  if (!user) {
+    return (
+       <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+        <SidebarTrigger />
+        <h1 className="text-xl font-semibold md:text-2xl font-headline">{getPageTitle()}</h1>
+       </header>
+    );
+  }
   
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
@@ -86,28 +88,9 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <span>Switch Role</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                  <DropdownMenuRadioGroup value={user.role} onValueChange={(value) => switchRole(value as UserRole)}>
-                    {Object.keys(roleDisplayNames).map((role) => (
-                      <DropdownMenuRadioItem key={role} value={role}>
-                        {roleDisplayNames[role as UserRole]}
-                      </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </Link>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

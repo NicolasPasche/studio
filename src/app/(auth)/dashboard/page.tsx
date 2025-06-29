@@ -6,14 +6,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user && user.role) {
+    if (!loading && user && user.role) {
       router.replace(`/dashboard/${user.role}`);
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
   return (
      <div className="space-y-4">
