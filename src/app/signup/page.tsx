@@ -39,12 +39,11 @@ export default function SignUpPage() {
       await updateProfile(userCredential.user, {
         displayName: name,
       });
-      // Sign the user out immediately. They can't log in until a role is assigned.
       await signOut(auth);
       setSuccess(true);
     } catch (err: any) {
       console.error("Firebase Auth Error:", err);
-      let message = "Failed to create an account. Please try again.";
+      let message;
       switch (err.code) {
         case 'auth/email-already-in-use':
           message = "This email address is already in use by another account.";
@@ -59,8 +58,13 @@ export default function SignUpPage() {
           message = "The password is too weak. Please use at least 6 characters.";
           break;
         case 'auth/network-request-failed':
-             message = "Network error. Please check your internet connection and Firebase project configuration.";
+        case 'auth/invalid-api-key':
+        case 'auth/app-deleted':
+        case 'auth/invalid-app-credential':
+             message = "Network error or invalid configuration. Please check your internet connection and Firebase project setup in `src/lib/firebase.ts`.";
              break;
+        default:
+          message = `An unexpected error occurred: ${err.message}`;
       }
       setError(message);
     } finally {

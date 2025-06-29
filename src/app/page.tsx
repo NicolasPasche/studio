@@ -33,10 +33,9 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged in AuthProvider will handle checking the role and redirecting.
-      // We can optimistically navigate to the dashboard page.
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err: any)
+    {
       console.error('Firebase Auth Error:', err);
       let message;
 
@@ -57,11 +56,14 @@ export default function LoginPage() {
           message = 'This user account has been disabled.';
           break;
         case 'auth/network-request-failed':
+        case 'auth/invalid-api-key':
+        case 'auth/app-deleted':
+        case 'auth/invalid-app-credential':
           message =
-            'Network error. Please check your internet connection and Firebase project configuration.';
+            'Network error or invalid configuration. Please check your internet connection and Firebase project setup in `src/lib/firebase.ts`.';
           break;
         default:
-          message = 'Failed to sign in. Please check your credentials.';
+          message = `An unexpected error occurred: ${err.message}`;
       }
       setError(message);
     } finally {
