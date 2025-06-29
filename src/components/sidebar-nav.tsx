@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Users,
@@ -15,6 +13,7 @@ import {
   Users2,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth";
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 
 const commonLinks = [
   { href: "/settings", label: "Settings", icon: Settings },
@@ -49,23 +48,30 @@ export function SidebarNav() {
   const allLinks = [...links, ...commonLinks];
 
   return (
-    <nav className="flex flex-col gap-2 px-4">
+    <SidebarMenu className="gap-2 px-2">
       {allLinks.map((link) => {
         const isActive = pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href));
         return (
-          <Button
-            key={link.href}
-            asChild
-            variant={isActive ? "secondary" : "ghost"}
-            className="justify-start"
-          >
-            <Link href={link.href}>
-              <link.icon className="mr-2 h-4 w-4" />
-              {link.label}
-            </Link>
-          </Button>
+          <SidebarMenuItem key={link.href}>
+            <SidebarMenuButton
+              asChild
+              variant={isActive ? "secondary" : "ghost"}
+              isActive={isActive}
+              className="justify-start w-full"
+              tooltip={{
+                children: link.label,
+                side: "right",
+                align: "center",
+              }}
+            >
+              <Link href={link.href}>
+                <link.icon />
+                <span>{link.label}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         );
       })}
-    </nav>
+    </SidebarMenu>
   );
 }

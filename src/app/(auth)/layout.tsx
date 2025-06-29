@@ -11,8 +11,10 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarInset,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
 
@@ -24,23 +26,31 @@ export default function AuthenticatedLayout({
   return (
     <AuthProvider>
       <SidebarProvider>
-        <Sidebar className="bg-sidebar text-sidebar-foreground border-r">
+        <Sidebar className="bg-sidebar text-sidebar-foreground border-r" collapsible="icon">
           <SidebarHeader className="p-4">
             <Link href="/dashboard" className="flex items-center gap-2">
               <Icons.logo className="h-8 w-8 text-primary" />
-              <span className="text-xl font-semibold font-headline">Apex Workflow</span>
+              <span className="text-xl font-semibold font-headline group-data-[state=collapsed]:hidden">Apex Workflow</span>
             </Link>
           </SidebarHeader>
           <SidebarContent>
             <SidebarNav />
           </SidebarContent>
-          <SidebarFooter className="p-4">
-             <Button asChild variant="ghost" className="justify-start">
-               <Link href="/">
-                 <LogOut className="mr-2 h-4 w-4" />
-                 Logout
-               </Link>
-             </Button>
+          <SidebarFooter className="p-2">
+             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild variant="ghost" className="w-full justify-start" tooltip={{
+                  children: "Logout",
+                  side: "right",
+                  align: "center",
+                }}>
+                  <Link href="/">
+                    <LogOut />
+                    <span>Logout</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>
