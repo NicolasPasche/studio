@@ -3,32 +3,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to get user's role from the 'users' collection
-    function getUserRole() {
+    function getRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
-    // Lock down user_roles - only readable, not writable by clients
+    // Allow authenticated users to read roles during login check.
+    // This collection should be managed via the Firebase console or a backend.
     match /user_roles/{email} {
-      allow read: if request.auth != null;
-      allow write: if false; // Should be managed from the server/console
+      allow read: if request.auth.uid != null;
+      allow write: if false; // Prevent client-side modification
     }
 
-    // Users can read/update their own document
+    // Users can read/update their own profile, and it's created for them.
+    // They can't change their own role.
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
+      allow read, update: if request.auth.uid == userId && request.resource.data.role == resource.data.role;
       allow create: if request.auth.uid == userId;
     }
     
-    // Customers collection for customer management page
-    match /customers/{customerId} {
-      allow read, write: if getUserRole() in ['sales', 'admin'];
+    // Example for a collection that sales and admin can access
+    match /customers/{docId=**} {
+        allow read, write: if getRole() in ['sales', 'admin'];
     }
 
-    // Add rules for any other collections as needed.
-    // Example:
-    // match /leads/{leadId} {
-    //   allow read, write: if getUserRole() in ['sales', 'admin', 'proposal'];
-    // }
+    // Default-deny all other collections
+    match /{path=**}/documents/{docId=**} {
+      allow read, write: if false;
+    }
   }
 }
