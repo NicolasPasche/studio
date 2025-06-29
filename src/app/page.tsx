@@ -1,10 +1,10 @@
-"use client"
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'
-import Link from "next/link";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { Button } from "@/components/ui/button"
+'use client';
+import React, {useState} from 'react';
+import {useRouter} from 'next/navigation';
+import Link from 'next/link';
+import {signInWithEmailAndPassword} from 'firebase/auth';
+import {auth} from '@/lib/firebase';
+import {Button} from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -12,22 +12,22 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Icons } from "@/components/icons"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertTriangle } from "lucide-react"
+} from '@/components/ui/card';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Icons} from '@/components/icons';
+import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
+import {AlertTriangle} from 'lucide-react';
 
 export default function LoginPage() {
-  const router = useRouter()
+  const router = useRouter();
   const [email, setEmail] = useState('nicolas.pasche@proton.me');
   const [password, setPassword] = useState('Bellw@ld2008');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (event: React.FormEvent) => {
-    event.preventDefault()
+    event.preventDefault();
     setLoading(true);
     setError('');
 
@@ -37,29 +37,41 @@ export default function LoginPage() {
       // We can optimistically navigate to the dashboard page.
       router.push('/dashboard');
     } catch (err: any) {
-      console.error("Firebase Auth Error:", err);
-      let message = "Failed to sign in. An unexpected error occurred.";
-      switch (err.code) {
+      console.error('Firebase Auth Error:', err);
+      let message = 'Failed to sign in. An unexpected error occurred.';
+
+      // Custom error for dev user if account doesn't exist
+      if (
+        err.code === 'auth/invalid-credential' &&
+        email === 'nicolas.pasche@proton.me'
+      ) {
+        message =
+          'Dev user not found. Please go to the Sign Up page to create the account first.';
+      } else {
+        switch (err.code) {
           case 'auth/invalid-email':
-              message = "The email address is not valid. Please check and try again.";
-              break;
+            message =
+              'The email address is not valid. Please check and try again.';
+            break;
           case 'auth/invalid-credential':
-              message = "Invalid credentials. Please check your email and password.";
-              break;
+            message = 'Invalid credentials. Please check your email and password.';
+            break;
           case 'auth/user-disabled':
-              message = "This user account has been disabled.";
-              break;
+            message = 'This user account has been disabled.';
+            break;
           case 'auth/network-request-failed':
-              message = "Network error. Please check your internet connection and Firebase project configuration.";
-              break;
+            message =
+              'Network error. Please check your internet connection and Firebase project configuration.';
+            break;
           default:
-              message = "Failed to sign in. Please check your credentials.";
+            message = 'Failed to sign in. Please check your credentials.';
+        }
       }
       setError(message);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/50 p-4">
@@ -73,18 +85,23 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
-             {error && (
+            {error && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Login Failed</AlertTitle>
-                <AlertDescription>
-                  {error}
-                </AlertDescription>
+                <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="sales@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                id="email"
+                type="email"
+                placeholder="sales@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -93,15 +110,25 @@ export default function LoginPage() {
                   Forgot password?
                 </a>
               </div>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90"
+              disabled={loading}
+            >
               {loading ? 'Signing In...' : 'Sign In'}
             </Button>
             <div className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
+              Don&apos;t have an account?{' '}
               <Link href="/signup" className="text-primary hover:underline">
                 Sign up
               </Link>
@@ -110,5 +137,5 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
-  )
+  );
 }
