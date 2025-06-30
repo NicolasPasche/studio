@@ -7,7 +7,13 @@ export interface Lead {
   source: string;
   notes?: string;
   type: 'Scaffolding' | 'Formwork';
-  status: 'New Lead' | 'Qualified' | 'Proposal Sent' | 'Negotiation' | 'Won';
+  status:
+    | 'New Lead'
+    | 'Qualified'
+    | 'Proposal Sent'
+    | 'Negotiation'
+    | 'Won'
+    | 'Lost';
   createdAt: {
     seconds: number;
     nanoseconds: number;
@@ -17,8 +23,9 @@ export interface Lead {
 
 export type Pipeline = {
   'New Lead': Lead[];
-  'Qualified': Lead[];
+  Qualified: Lead[];
   'Proposal Sent': Lead[];
-  'Negotiation': Lead[];
-  'Won': Lead[];
+  Negotiation: Lead[];
+  Won: Lead[];
+  Lost: Lead[];
 };
