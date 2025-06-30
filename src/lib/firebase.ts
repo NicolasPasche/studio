@@ -2,14 +2,14 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// NOTE: Add your "appId" after registering your web app in the Firebase Console
+// Your project's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAoSrv18i8U8nNgDRgro6bk2uLIeLjDSME",
   authDomain: "apex-workflow-f3d61.firebaseapp.com",
   projectId: "apex-workflow-f3d61",
   storageBucket: "apex-workflow-f3d61.appspot.com",
   messagingSenderId: "705154707359",
-  appId: "YOUR_APP_ID_HERE" // <-- Get this from the Firebase console
+  appId: "YOUR_APP_ID_HERE" // <-- Find this in your Firebase console and paste it here
 };
 
 // Initialize Firebase
