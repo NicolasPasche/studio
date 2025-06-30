@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Building, User, Mail, Phone, Send, Save } from 'lucide-react';
+import { Building, User, Mail, Phone, Send, Save, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -180,12 +180,30 @@ export default function CreateProposalPage() {
             </CardContent>
             <CardFooter className="flex justify-between">
                  <Button variant="outline" onClick={handleSaveDraft} disabled={isSaving || isSubmitting}>
-                    <Save className="mr-2 h-4 w-4" />
-                    {isSaving ? "Saving..." : "Save Draft"}
+                   {isSaving ? (
+                     <>
+                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                       Saving...
+                     </>
+                   ) : (
+                     <>
+                       <Save className="mr-2 h-4 w-4" />
+                       Save Draft
+                     </>
+                   )}
                  </Button>
                  <Button onClick={handleSubmitProposal} disabled={isSaving || isSubmitting}>
-                    <Send className="mr-2 h-4 w-4" />
-                    {isSubmitting ? "Submitting..." : "Submit Proposal"}
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Submitting...
+                        </>
+                    ) : (
+                        <>
+                            <Send className="mr-2 h-4 w-4" />
+                            Submit Proposal
+                        </>
+                    )}
                 </Button>
             </CardFooter>
          </Card>

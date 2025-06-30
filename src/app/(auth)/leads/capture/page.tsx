@@ -37,6 +37,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { Loader2 } from 'lucide-react';
 
 const leadSchema = z.object({
   contactName: z.string().min(2, { message: 'Contact name is required.' }),
@@ -251,7 +252,14 @@ function LeadForm({ type }: { type: 'Scaffolding' | 'Formwork' }) {
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Submit Lead'}
+            {isSubmitting ? (
+               <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+               </>
+            ) : (
+              'Submit Lead'
+            )}
           </Button>
         </div>
       </form>

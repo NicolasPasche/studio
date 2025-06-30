@@ -17,7 +17,7 @@ import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Icons} from '@/components/icons';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
-import {AlertTriangle} from 'lucide-react';
+import {AlertTriangle, Loader2} from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -69,7 +69,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/50 p-4">
-      <Card className="w-full max-w-sm shadow-2xl">
+      <Card className="w-full max-w-sm shadow-2xl animate-fade-in">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
             <Icons.logo className="h-12 w-12 text-primary" />
@@ -120,7 +120,14 @@ export default function LoginPage() {
               className="w-full bg-primary hover:bg-primary/90"
               disabled={loading}
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing In...
+                  </>
+              ) : (
+                'Sign In'
+              )}
             </Button>
             <div className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}
