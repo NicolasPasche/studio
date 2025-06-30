@@ -54,7 +54,7 @@ const recentActivities = [
 export default function SalesDashboard() {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -106,8 +106,8 @@ export default function SalesDashboard() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="col-span-1 lg:col-span-1">
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card>
           <CardHeader>
             <CardTitle>Sales Performance</CardTitle>
             <CardDescription>Sales vs. Target (Last 6 Months)</CardDescription>
