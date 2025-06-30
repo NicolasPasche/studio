@@ -651,28 +651,45 @@ function OpportunitiesSkeleton() {
 }
 
 export default function OpportunitiesPage() {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <OpportunitiesSkeleton />;
+  }
+  
+  const isProposalEngineer = user.role === 'proposal';
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Sales Opportunities</CardTitle>
+          <CardTitle>
+             {isProposalEngineer ? 'Formwork Opportunities' : 'Sales Opportunities'}
+          </CardTitle>
           <CardDescription>
-            Manage all sales opportunities, for both formwork and scaffolding.
+            {isProposalEngineer 
+              ? 'Manage all formwork opportunities assigned for proposal creation.'
+              : 'Manage all sales opportunities, for both formwork and scaffolding.'}
           </CardDescription>
         </CardHeader>
       </Card>
-      <Tabs defaultValue="formwork" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="formwork">Formwork Pipeline</TabsTrigger>
-          <TabsTrigger value="scaffolding">Scaffolding Leads</TabsTrigger>
-        </TabsList>
-        <TabsContent value="formwork">
-          <FormworkPipeline />
-        </TabsContent>
-        <TabsContent value="scaffolding">
-          <ScaffoldingLeadsTable />
-        </TabsContent>
-      </Tabs>
+      
+      {isProposalEngineer ? (
+        <FormworkPipeline />
+      ) : (
+        <Tabs defaultValue="formwork" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="formwork">Formwork Pipeline</TabsTrigger>
+            <TabsTrigger value="scaffolding">Scaffolding Leads</TabsTrigger>
+          </TabsList>
+          <TabsContent value="formwork">
+            <FormworkPipeline />
+          </TabsContent>
+          <TabsContent value="scaffolding">
+            <ScaffoldingLeadsTable />
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }
