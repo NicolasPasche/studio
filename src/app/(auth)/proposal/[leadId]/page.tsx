@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { useParams, useRouter } from 'next/navigation';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Lead } from '@/lib/types';
 import {
@@ -18,26 +18,31 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Building, User, Mail, Phone, Bot } from 'lucide-react';
+import { Building, User, Mail, Phone, Send, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CreateProposalPage() {
   const params = useParams();
   const leadId = params.leadId as string;
+  const router = useRouter();
+  const { toast } = useToast();
 
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [proposal, setProposal] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const { toast } = useToast();
-
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   useEffect(() => {
     if (leadId) {
       const fetchLead = async () => {
         try {
-          const leadDoc = await getDoc(doc(db, 'leads', leadId));
+          const leadDocRef = doc(db, 'leads', leadId);
+          const leadDoc = await getDoc(leadDocRef);
           if (leadDoc.exists()) {
-            setLead({ id: leadDoc.id, ...leadDoc.data() } as Lead);
+            const leadData = { id: leadDoc.id, ...leadDoc.data() } as Lead;
+            setLead(leadData);
+            setProposal(leadData.proposalContent || '');
           } else {
             toast({ variant: 'destructive', title: 'Error', description: 'Lead not found.' });
           }
@@ -52,14 +57,38 @@ export default function CreateProposalPage() {
     }
   }, [leadId, toast]);
 
-  const handleGenerate = () => {
-      // Placeholder for AI generation
-      setIsGenerating(true);
-      toast({ title: "Coming Soon!", description: "AI proposal generation is not yet implemented."});
-      setTimeout(() => {
-          setProposal("This is a placeholder for the AI-generated proposal content. It would typically include an introduction, scope of work, timeline, and pricing based on the lead's information.");
-          setIsGenerating(false);
-      }, 1500);
+  const handleSaveDraft = async () => {
+    setIsSaving(true);
+    try {
+      const leadDocRef = doc(db, 'leads', leadId);
+      await updateDoc(leadDocRef, {
+        proposalContent: proposal,
+      });
+      toast({ title: "Draft Saved!", description: "Your proposal draft has been saved successfully." });
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save draft.' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSubmitProposal = async () => {
+    setIsSubmitting(true);
+    try {
+      const leadDocRef = doc(db, 'leads', leadId);
+      await updateDoc(leadDocRef, {
+        proposalContent: proposal,
+        status: 'Proposal Sent',
+      });
+      toast({ title: "Proposal Submitted!", description: "The proposal has been sent for review." });
+      router.push('/opportunities');
+    } catch (error) {
+      console.error("Error submitting proposal:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to submit proposal.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -126,19 +155,22 @@ export default function CreateProposalPage() {
                     <Label htmlFor="proposal-content">Proposal Content</Label>
                     <Textarea 
                         id="proposal-content"
-                        placeholder="Click 'Generate with AI' or start writing here..."
+                        placeholder="Start writing the proposal here..."
                         value={proposal}
                         onChange={(e) => setProposal(e.target.value)}
                         rows={15}
-                        disabled={isGenerating}
+                        disabled={isSaving || isSubmitting}
                      />
                 </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-                 <Button variant="outline" disabled={isGenerating}>Save Draft</Button>
-                 <Button onClick={handleGenerate} disabled={isGenerating}>
-                    <Bot className="mr-2 h-4 w-4" />
-                    {isGenerating ? "Generating..." : "Generate with AI"}
+                 <Button variant="outline" onClick={handleSaveDraft} disabled={isSaving || isSubmitting}>
+                    <Save className="mr-2 h-4 w-4" />
+                    {isSaving ? "Saving..." : "Save Draft"}
+                 </Button>
+                 <Button onClick={handleSubmitProposal} disabled={isSaving || isSubmitting}>
+                    <Send className="mr-2 h-4 w-4" />
+                    {isSubmitting ? "Submitting..." : "Submit Proposal"}
                 </Button>
             </CardFooter>
          </Card>

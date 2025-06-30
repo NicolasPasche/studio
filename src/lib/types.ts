@@ -12,6 +12,7 @@ export interface Lead {
     seconds: number;
     nanoseconds: number;
   };
+  proposalContent?: string;
 }
 
 export type Pipeline = {
