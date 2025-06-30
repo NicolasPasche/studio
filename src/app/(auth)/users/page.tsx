@@ -7,7 +7,7 @@ import {
   doc,
   setDoc,
   updateDoc,
-  query,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { User, UserRole } from '@/lib/auth';
@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +38,16 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -47,7 +57,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Shield, Briefcase, UserCog, Users, Code, Mail } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { UserPlus, Shield, Briefcase, UserCog, Users, Code, Trash2 } from 'lucide-react';
 
 type DisplayUser = {
   id: string; // Firebase Auth UID
@@ -153,7 +164,10 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
 export default function UserManagementPage() {
   const [users, setUsers] = useState<DisplayUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user: currentUser } = useAuth();
   const { toast } = useToast();
+  const [userToDelete, setUserToDelete] = useState<DisplayUser | null>(null);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -205,71 +219,131 @@ export default function UserManagementPage() {
     }
   };
 
+  const handleDeleteClick = (user: DisplayUser) => {
+    setUserToDelete(user);
+    setIsAlertOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await deleteDoc(doc(db, 'users', userToDelete.id));
+      await deleteDoc(doc(db, 'user_roles', userToDelete.email));
+
+      toast({
+        title: 'User Deleted',
+        description: `User ${userToDelete.email} has been removed and their access revoked.`,
+      });
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: 'Could not delete the user.',
+      });
+    }
+    setIsAlertOpen(false);
+  };
+
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>User Management</CardTitle>
-            <CardDescription>
-              Invite, view, and manage user roles across the application.
-            </CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>
+                Invite, view, and manage user roles across the application.
+              </CardDescription>
+            </div>
+            <InviteUserDialog onUserInvited={fetchUsers} />
           </div>
-          <InviteUserDialog onUserInvited={fetchUsers} />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead className="w-[180px]">Role</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-                <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading users...</TableCell>
-                </TableRow>
-            ) : users.length === 0 ? (
-                 <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24">No users found.</TableCell>
-                </TableRow>
-            ) : (
-                users.map((user) => (
-                <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                    {user.role === 'dev' ? (
-                        <div className="flex items-center">
-                            <Code className="mr-2 h-4 w-4 text-muted-foreground" />
-                            <span className="capitalize text-muted-foreground">Developer</span>
-                        </div>
-                    ) : (
-                        <Select
-                            value={user.role}
-                            onValueChange={(newRole) => handleRoleChange(user.id, user.email, newRole as UserRole)}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="admin"><div className="flex items-center"><Shield className="mr-2 h-4 w-4"/>Admin</div></SelectItem>
-                                <SelectItem value="sales"><div className="flex items-center"><Briefcase className="mr-2 h-4 w-4"/>Sales</div></SelectItem>
-                                <SelectItem value="proposal"><div className="flex items-center"><UserCog className="mr-2 h-4 w-4"/>Proposal</div></SelectItem>
-                                <SelectItem value="hr"><div className="flex items-center"><Users className="mr-2 h-4 w-4"/>HR</div></SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )}
-                    </TableCell>
-                </TableRow>
-                ))
-            )}
-            </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="w-[180px]">Role</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                  <TableRow>
+                      <TableCell colSpan={4} className="text-center">Loading users...</TableCell>
+                  </TableRow>
+              ) : users.length === 0 ? (
+                  <TableRow>
+                      <TableCell colSpan={4} className="text-center h-24">No users found.</TableCell>
+                  </TableRow>
+              ) : (
+                  users.map((user) => {
+                    const isCurrentUser = currentUser?.email === user.email;
+                    const canDelete = !isCurrentUser && user.role !== 'dev';
+                    return (
+                      <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.name}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                          {user.role === 'dev' ? (
+                              <div className="flex items-center">
+                                  <Code className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span className="capitalize text-muted-foreground">Developer</span>
+                              </div>
+                          ) : (
+                              <Select
+                                  value={user.role}
+                                  onValueChange={(newRole) => handleRoleChange(user.id, user.email, newRole as UserRole)}
+                                  disabled={isCurrentUser}
+                              >
+                                  <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select role" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="admin"><div className="flex items-center"><Shield className="mr-2 h-4 w-4"/>Admin</div></SelectItem>
+                                      <SelectItem value="sales"><div className="flex items-center"><Briefcase className="mr-2 h-4 w-4"/>Sales</div></SelectItem>
+                                      <SelectItem value="proposal"><div className="flex items-center"><UserCog className="mr-2 h-4 w-4"/>Proposal</div></SelectItem>
+                                      <SelectItem value="hr"><div className="flex items-center"><Users className="mr-2 h-4 w-4"/>HR</div></SelectItem>
+                                  </SelectContent>
+                              </Select>
+                          )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {canDelete && (
+                              <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(user)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <span className="sr-only">Delete User</span>
+                              </Button>
+                            )}
+                          </TableCell>
+                      </TableRow>
+                    )
+                  })
+              )}
+              </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user
+              and their associated role, revoking all access.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

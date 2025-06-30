@@ -84,18 +84,19 @@ function OpportunityDetailsDialog({
   isOpen,
   onOpenChange,
   onStatusChange,
+  onDelete,
 }: {
   opportunity: Lead | null;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onStatusChange: (newStatus: Lead['status']) => void;
+  onDelete: (opportunity: Lead) => void;
 }) {
   const { user } = useAuth();
 
   if (!opportunity) return null;
 
-  const canTakeAction =
-    (user?.role === 'admin' || user?.role === 'dev') && opportunity.status === 'Proposal Sent';
+  const canTakeAction = user?.role === 'admin' || user?.role === 'dev';
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -174,25 +175,40 @@ function OpportunityDetailsDialog({
             </div>
           </div>
         </ScrollArea>
-        <DialogFooter className="pt-4 pr-4 sm:justify-between">
-          <DialogClose asChild>
-            <Button variant="outline">Close</Button>
-          </DialogClose>
-          {canTakeAction && (
-            <div className="flex gap-2">
+        <DialogFooter className="pt-4 pr-4 sm:justify-between items-center">
+          <div>
+            {canTakeAction && (
               <Button
-                variant="destructive"
-                onClick={() => onStatusChange('Lost')}
+                variant="ghost"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                size="sm"
+                onClick={() => onDelete(opportunity)}
               >
-                <ThumbsDown className="mr-2 h-4 w-4" />
-                Reject Proposal
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Opportunity
               </Button>
-              <Button onClick={() => onStatusChange('Negotiation')}>
-                <ThumbsUp className="mr-2 h-4 w-4" />
-                Accept Proposal
-              </Button>
-            </div>
-          )}
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {canTakeAction && opportunity.status === 'Proposal Sent' && (
+              <div className="flex gap-2">
+                <Button
+                  variant="destructive"
+                  onClick={() => onStatusChange('Lost')}
+                >
+                  <ThumbsDown className="mr-2 h-4 w-4" />
+                  Reject Proposal
+                </Button>
+                <Button onClick={() => onStatusChange('Negotiation')}>
+                  <ThumbsUp className="mr-2 h-4 w-4" />
+                  Accept Proposal
+                </Button>
+              </div>
+            )}
+             <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+            </DialogClose>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -211,6 +227,8 @@ function FormworkPipeline() {
   const [loading, setLoading] = useState(true);
   const [selectedOpp, setSelectedOpp] = useState<Lead | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [oppToDelete, setOppToDelete] = useState<Lead | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -276,6 +294,33 @@ function FormworkPipeline() {
         description: 'Could not update the opportunity status.',
       });
     }
+  };
+
+  const handleDeleteClick = (opportunity: Lead) => {
+    setOppToDelete(opportunity);
+    setIsDetailsOpen(false);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (oppToDelete) {
+      try {
+        await deleteDoc(doc(db, 'leads', oppToDelete.id));
+        toast({
+          title: 'Opportunity Deleted',
+          description: `The opportunity for ${oppToDelete.company} has been deleted.`,
+        });
+        setOppToDelete(null);
+      } catch (error) {
+        console.error('Error deleting opportunity:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Delete Failed',
+          description: 'Could not delete the opportunity.',
+        });
+      }
+    }
+    setIsDeleteAlertOpen(false);
   };
 
   if (loading) {
@@ -348,7 +393,30 @@ function FormworkPipeline() {
         isOpen={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
         onStatusChange={handleStatusChange}
+        onDelete={handleDeleteClick}
       />
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              opportunity for {oppToDelete?.company}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOppToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className={buttonVariants({ variant: 'destructive' })}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
