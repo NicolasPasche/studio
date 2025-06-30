@@ -16,6 +16,14 @@ const roleIcons: Record<UserRole, React.ElementType> = {
     dev: Code,
 }
 
+const roleDisplayNames: Record<UserRole, string> = {
+  admin: "Admin",
+  sales: "Sales",
+  proposal: "Proposal Engineer",
+  hr: "HR",
+  dev: "Developer"
+}
+
 export default function DevDashboard() {
   const { setImpersonatedRole } = useAuth();
   const router = useRouter();
@@ -40,7 +48,7 @@ export default function DevDashboard() {
                     return (
                         <Button key={role} variant="outline" className="h-20 flex-col gap-2" onClick={() => handleRoleSelect(role)}>
                            <Icon className="h-6 w-6" />
-                           <span className="capitalize">{role}</span>
+                           <span>{roleDisplayNames[role]}</span>
                         </Button>
                     )
                 })}

@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  getDoc,
+} from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Lead } from '@/lib/types';
 import {
@@ -24,10 +31,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProposalDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const q = query(
@@ -48,18 +57,53 @@ export default function ProposalDashboard() {
       },
       (error) => {
         console.error('Error fetching leads:', error);
+        // Check if the error is a permission denied error about an index
+        if (
+          error.message.includes('requires an index') ||
+          error.message.includes('permission-denied')
+        ) {
+          const firestoreLinkRegex = /(https?:\/\/[^\s]+)/;
+          const match = error.message.match(firestoreLinkRegex);
+          if (match) {
+            toast({
+              variant: 'destructive',
+              title: 'Database Index Required',
+              description: (
+                <span>
+                  Please create a composite index in Firestore to view this
+                  page.
+                  <a
+                    href={match[0]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-bold ml-1"
+                  >
+                    Click here to create it.
+                  </a>
+                </span>
+              ),
+              duration: Infinity,
+            });
+          }
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not fetch leads.',
+          });
+        }
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Proposal Team Dashboard</CardTitle>
+          <CardTitle>Proposal Engineering Dashboard</CardTitle>
           <CardDescription>
             Qualified leads that are ready for proposal creation.
           </CardDescription>
@@ -85,7 +129,7 @@ export default function ProposalDashboard() {
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
                     <div className="flex justify-center items-center">
-                       <p>Loading leads...</p>
+                      <p>Loading leads...</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -98,7 +142,9 @@ export default function ProposalDashboard() {
               ) : (
                 leads.map((lead) => (
                   <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.company}</TableCell>
+                    <TableCell className="font-medium">
+                      {lead.company}
+                    </TableCell>
                     <TableCell>{lead.contactName}</TableCell>
                     <TableCell>
                       {lead.createdAt?.seconds
@@ -111,7 +157,9 @@ export default function ProposalDashboard() {
                     <TableCell>
                       <Badge
                         variant={
-                          lead.status === 'New Lead' ? 'destructive' : 'default'
+                          lead.status === 'New Lead'
+                            ? 'destructive'
+                            : 'default'
                         }
                       >
                         {lead.status}

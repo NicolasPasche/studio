@@ -143,7 +143,7 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="proposal">Proposal</SelectItem>
+                <SelectItem value="proposal">Proposal Engineer</SelectItem>
                 <SelectItem value="hr">HR</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
@@ -268,7 +268,7 @@ export default function UserManagementPage() {
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead className="w-[180px]">Role</TableHead>
+                <TableHead className="w-[220px]">Role</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -307,7 +307,7 @@ export default function UserManagementPage() {
                                   <SelectContent>
                                       <SelectItem value="admin"><div className="flex items-center"><Shield className="mr-2 h-4 w-4"/>Admin</div></SelectItem>
                                       <SelectItem value="sales"><div className="flex items-center"><Briefcase className="mr-2 h-4 w-4"/>Sales</div></SelectItem>
-                                      <SelectItem value="proposal"><div className="flex items-center"><UserCog className="mr-2 h-4 w-4"/>Proposal</div></SelectItem>
+                                      <SelectItem value="proposal"><div className="flex items-center"><UserCog className="mr-2 h-4 w-4"/>Proposal Engineer</div></SelectItem>
                                       <SelectItem value="hr"><div className="flex items-center"><Users className="mr-2 h-4 w-4"/>HR</div></SelectItem>
                                   </SelectContent>
                               </Select>
