@@ -10,7 +10,7 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { User, UserRole } from '@/lib/auth';
+import { User, UserRole, roleDisplayNames } from '@/lib/auth';
 import {
   Card,
   CardContent,
@@ -88,7 +88,7 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
       await setDoc(userRoleRef, { role });
       toast({
         title: 'User Invited',
-        description: `${email} has been invited as a ${role}. They can now sign up.`,
+        description: `${email} has been invited as a ${roleDisplayNames[role]}. They can now sign up.`,
       });
       setIsOpen(false);
       setEmail('');
@@ -207,7 +207,7 @@ export default function UserManagementPage() {
 
         toast({
             title: "Role Updated",
-            description: `The role for ${email} has been changed to ${newRole}.`
+            description: `The role for ${email} has been changed to ${roleDisplayNames[newRole]}.`
         });
     } catch (error) {
         console.error("Error updating role:", error);

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { UserRole, users } from "@/lib/auth";
+import { UserRole, users, roleDisplayNames } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Briefcase, UserCog, Shield, Code } from "lucide-react";
@@ -14,14 +14,6 @@ const roleIcons: Record<UserRole, React.ElementType> = {
     proposal: UserCog,
     hr: Users,
     dev: Code,
-}
-
-const roleDisplayNames: Record<UserRole, string> = {
-  admin: "Admin",
-  sales: "Sales",
-  proposal: "Proposal Engineer",
-  hr: "HR",
-  dev: "Developer"
 }
 
 export default function DevDashboard() {

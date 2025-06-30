@@ -45,3 +45,11 @@ export const users: Record<UserRole, User> = {
     initials: "DV",
   }
 };
+
+export const roleDisplayNames: Record<UserRole, string> = {
+  admin: "Admin",
+  sales: "Sales",
+  proposal: "Proposal Engineer",
+  hr: "HR",
+  dev: "Developer"
+};
