@@ -1,5 +1,8 @@
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Users, FileText, BarChart3, AlertTriangle } from "lucide-react";
+import { Users, FileText, BarChart3, AlertTriangle, UserCog } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
 
 export default function AdminDashboard() {
   return (
@@ -35,7 +38,7 @@ export default function AdminDashboard() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">System Health</CardTitle>
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
+              </eadContent>
               <CardContent>
                 <div className="text-2xl font-bold text-accent">Nominal</div>
                 <p className="text-xs text-muted-foreground">All systems operational</p>
@@ -54,12 +57,23 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
-       <Card>
+      <Card>
         <CardHeader>
-          <CardTitle>Recent Admin Actions</CardTitle>
+          <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent>
-           <p className="text-muted-foreground">No recent actions to display.</p>
+        <CardContent className="flex gap-4">
+           <Button asChild variant="outline">
+              <Link href="/users">
+                <UserCog className="mr-2 h-4 w-4" />
+                Manage Users
+              </Link>
+           </Button>
+            <Button asChild variant="outline">
+              <Link href="/customers">
+                <Users className="mr-2 h-4 w-4" />
+                Manage Customers
+              </Link>
+           </Button>
         </CardContent>
       </Card>
     </div>

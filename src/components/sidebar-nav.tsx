@@ -12,6 +12,7 @@ import {
   Briefcase,
   Users2,
   Code,
+  UserCog,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth";
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuSkeleton } from "@/components/ui/sidebar";
@@ -29,7 +30,9 @@ const navLinksByRole: Record<UserRole, { href: string; label: string; icon: Reac
   ],
   admin: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/users", label: "User Management", icon: UserCog },
     { href: "/customers", label: "Customer Mgmt", icon: Users },
+    { href: "/employees", label: "Employee Mgmt", icon: Users2 },
   ],
   proposal: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -58,14 +61,22 @@ export function SidebarNav() {
 
   const roleToDisplay = realUser?.role === 'dev' ? user.role : realUser?.role;
   const links = navLinksByRole[roleToDisplay || 'sales'] || [];
-  const allLinks = [...links, ...commonLinks];
+  
+  // Combine role-specific links with common links, ensuring no duplicates
+  const allLinks = [...links];
+  commonLinks.forEach(commonLink => {
+    if (!links.find(link => link.href === commonLink.href)) {
+      allLinks.push(commonLink);
+    }
+  });
+
 
   return (
     <SidebarMenu className="gap-2 px-2">
       {allLinks.map((link) => {
         const isDashboardLink = link.href === "/dashboard";
         const isActive = isDashboardLink 
-            ? pathname.startsWith('/dashboard') 
+            ? pathname.startsWith('/dashboard') && !pathname.includes('/dashboard/dev')
             : pathname.startsWith(link.href);
 
         return (
