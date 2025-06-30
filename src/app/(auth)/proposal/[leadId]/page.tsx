@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Lead } from '@/lib/types';
@@ -20,7 +21,10 @@ import { Separator } from '@/components/ui/separator';
 import { Building, User, Mail, Phone, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export default function CreateProposalPage({ params }: { params: { leadId: string } }) {
+export default function CreateProposalPage() {
+  const params = useParams();
+  const leadId = params.leadId as string;
+
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [proposal, setProposal] = useState('');
@@ -28,10 +32,10 @@ export default function CreateProposalPage({ params }: { params: { leadId: strin
   const { toast } = useToast();
 
   useEffect(() => {
-    if (params.leadId) {
+    if (leadId) {
       const fetchLead = async () => {
         try {
-          const leadDoc = await getDoc(doc(db, 'leads', params.leadId));
+          const leadDoc = await getDoc(doc(db, 'leads', leadId));
           if (leadDoc.exists()) {
             setLead({ id: leadDoc.id, ...leadDoc.data() } as Lead);
           } else {
@@ -46,7 +50,7 @@ export default function CreateProposalPage({ params }: { params: { leadId: strin
       };
       fetchLead();
     }
-  }, [params.leadId, toast]);
+  }, [leadId, toast]);
 
   const handleGenerate = () => {
       // Placeholder for AI generation
