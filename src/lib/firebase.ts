@@ -9,7 +9,7 @@ const firebaseConfig = {
   projectId: "apex-workflow-f3d61",
   storageBucket: "apex-workflow-f3d61.appspot.com",
   messagingSenderId: "705154707359",
-  appId: "YOUR_APP_ID_HERE" // <-- Find this in your Firebase console and paste it here
+  appId: "1:705154707359:web:968f238561129f170438c8"
 };
 
 // Initialize Firebase
