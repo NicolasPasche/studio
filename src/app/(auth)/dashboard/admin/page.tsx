@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Users, FileText, BarChart3, AlertTriangle, UserCog, Users2, Layers } from "lucide-react";
+import { Users, FileText, BarChart3, AlertTriangle, UserCog, Users2, Layers, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -84,6 +84,12 @@ export default function AdminDashboard() {
               <Link href="/scaffolding-leads">
                 <Layers className="mr-2 h-4 w-4" />
                 Manage Scaffolding Leads
+              </Link>
+           </Button>
+            <Button asChild variant="outline">
+              <Link href="/opportunities">
+                <Target className="mr-2 h-4 w-4" />
+                Manage Formwork Pipeline
               </Link>
            </Button>
         </CardContent>
