@@ -286,12 +286,42 @@ function FormworkPipeline() {
       },
       (error) => {
         console.error('Error fetching leads:', error);
+        if (error.message.includes('requires an index')) {
+          const firestoreLinkRegex = /(https?:\/\/[^\s]+)/;
+          const match = error.message.match(firestoreLinkRegex);
+          if (match) {
+            toast({
+              variant: 'destructive',
+              title: 'Database Index Required',
+              description: (
+                <span>
+                  The Formwork Pipeline requires a database index to function.
+                  <a
+                    href={match[0]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-bold ml-1"
+                  >
+                    Click here to create it.
+                  </a>
+                </span>
+              ),
+              duration: Infinity,
+            });
+          }
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not fetch opportunities.',
+            });
+        }
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   const handleViewDetails = (opportunity: Lead) => {
     setSelectedOpp(opportunity);
@@ -472,11 +502,36 @@ function ScaffoldingLeadsTable() {
       },
       (error) => {
         console.error('Error fetching scaffolding leads: ', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not fetch scaffolding leads.',
-        });
+        if (error.message.includes('requires an index')) {
+           const firestoreLinkRegex = /(https?:\/\/[^\s]+)/;
+          const match = error.message.match(firestoreLinkRegex);
+          if (match) {
+            toast({
+              variant: 'destructive',
+              title: 'Database Index Required',
+              description: (
+                <span>
+                  The Scaffolding Leads table requires a database index to function.
+                  <a
+                    href={match[0]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-bold ml-1"
+                  >
+                    Click here to create it.
+                  </a>
+                </span>
+              ),
+              duration: Infinity,
+            });
+          }
+        } else {
+            toast({
+              variant: 'destructive',
+              title: 'Error',
+              description: 'Could not fetch scaffolding leads.',
+            });
+        }
         setLoading(false);
       }
     );
