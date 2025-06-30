@@ -21,8 +21,8 @@ import {AlertTriangle} from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('nicolas.pasche@proton.me');
-  const [password, setPassword] = useState('Bellw@ld2008');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
         case 'auth/invalid-credential':
           if (email === 'nicolas.pasche@proton.me') {
             message =
-              'Dev user not found. Please go to the Sign Up page to create the account first.';
+              'This is the dev account email. You must first go to the Sign Up page and CREATE this account. Click the "Sign up" link below.';
           } else {
             message = 'Invalid credentials. Please check your email and password.';
           }
@@ -96,7 +96,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="sales@example.com"
+                placeholder="nicolas.pasche@proton.me"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
