@@ -277,22 +277,22 @@ export default function CustomersPage() {
         <>
         <Card>
             <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <CardTitle>Customer Management</CardTitle>
                         <CardDescription>View, manage, and segment your customers.</CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="relative">
+                    <div className="flex flex-col-reverse sm:flex-row items-center gap-2 w-full sm:w-auto">
+                        <div className="relative w-full sm:w-auto">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input 
                                 placeholder="Search customers..." 
-                                className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
+                                className="pl-8 w-full sm:w-[200px] lg:w-[300px]"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <Button onClick={handleAddClick}>
+                        <Button onClick={handleAddClick} className="w-full sm:w-auto">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Customer
                         </Button>
