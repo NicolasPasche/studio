@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
+import Link from 'next/link';
 
 export default function ProposalDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -116,8 +117,10 @@ export default function ProposalDashboard() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm">
-                        Create Proposal
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/proposal/${lead.id}`}>
+                          Create Proposal
+                        </Link>
                       </Button>
                     </TableCell>
                   </TableRow>
