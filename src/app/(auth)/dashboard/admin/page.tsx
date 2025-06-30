@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Users, FileText, BarChart3, AlertTriangle, UserCog, Users2 } from "lucide-react";
+import { Users, FileText, BarChart3, AlertTriangle, UserCog, Users2, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent className="flex gap-4">
+        <CardContent className="flex flex-wrap gap-4">
            <Button asChild variant="outline">
               <Link href="/users">
                 <UserCog className="mr-2 h-4 w-4" />
@@ -78,6 +78,12 @@ export default function AdminDashboard() {
               <Link href="/employees">
                 <Users2 className="mr-2 h-4 w-4" />
                 Manage Employees
+              </Link>
+           </Button>
+           <Button asChild variant="outline">
+              <Link href="/scaffolding-leads">
+                <Layers className="mr-2 h-4 w-4" />
+                Manage Scaffolding Leads
               </Link>
            </Button>
         </CardContent>

@@ -8,6 +8,7 @@ import {
   orderBy,
   doc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Lead, Pipeline } from '@/lib/types';
@@ -150,9 +151,12 @@ function OpportunityDetailsDialog({
             </div>
           </div>
         </ScrollArea>
-        <DialogFooter className="pt-4 pr-4">
+        <DialogFooter className="pt-4 pr-4 sm:justify-between">
+            <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+            </DialogClose>
             {canTakeAction && (
-                <>
+                <div className="flex gap-2">
                     <Button
                         variant="destructive"
                         onClick={() => onStatusChange('Lost')}
@@ -164,11 +168,8 @@ function OpportunityDetailsDialog({
                         <ThumbsUp className="mr-2 h-4 w-4" />
                         Accept Proposal
                     </Button>
-                </>
+                </div>
             )}
-            <DialogClose asChild>
-                <Button variant="outline">Close</Button>
-            </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -190,7 +191,7 @@ export default function OpportunitiesPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const q = query(collection(db, 'leads'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'leads'), where('type', '==', 'Formwork'), orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(
       q,
@@ -259,13 +260,13 @@ export default function OpportunitiesPage() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Sales Pipeline</CardTitle>
+            <CardTitle>Formwork Sales Pipeline</CardTitle>
             <CardDescription>
-              Visualize and manage your sales opportunities.
+              Visualize and manage your formwork sales opportunities.
             </CardDescription>
           </CardHeader>
         </Card>
-        <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-8">
           {pipelineStages.map((stage) => (
             <Card key={stage}>
               <CardHeader>
@@ -347,7 +348,7 @@ function OpportunitiesSkeleton() {
           <Skeleton className="h-4 w-1/2" />
         </CardHeader>
       </Card>
-      <div className="space-y-8">
+      <div className="grid grid-cols-1 gap-8">
         {pipelineStages.map((stage) => (
           <Card key={stage}>
             <CardHeader>
