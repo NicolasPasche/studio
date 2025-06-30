@@ -11,7 +11,7 @@ export default function HRDashboard() {
         </CardHeader>
         <CardContent>
            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '100ms' }}>
+            <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '100ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
                 <Users2 className="h-4 w-4 text-muted-foreground" />
@@ -21,7 +21,7 @@ export default function HRDashboard() {
                 <p className="text-xs text-muted-foreground">+5 this quarter</p>
               </CardContent>
             </Card>
-            <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '200ms' }}>
+            <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '200ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Open Positions</CardTitle>
                 <Briefcase className="h-4 w-4 text-muted-foreground" />
@@ -31,7 +31,7 @@ export default function HRDashboard() {
                 <p className="text-xs text-muted-foreground">3 new this week</p>
               </CardContent>
             </Card>
-            <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '300ms' }}>
+            <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '300ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">New Hires</CardTitle>
                 <UserPlus className="h-4 w-4 text-muted-foreground" />
@@ -41,7 +41,7 @@ export default function HRDashboard() {
                 <p className="text-xs text-muted-foreground">This quarter</p>
               </CardContent>
             </Card>
-            <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '400ms' }}>
+            <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '400ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
                 <FileCheck className="h-4 w-4 text-muted-foreground" />

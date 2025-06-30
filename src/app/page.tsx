@@ -74,7 +74,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/50 p-4">
+    <div className="flex min-h-screen items-center justify-center p-4 animated-background">
       <Card className="w-full max-w-sm shadow-2xl animate-fade-in">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
@@ -120,7 +120,7 @@ export default function SignUpPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
