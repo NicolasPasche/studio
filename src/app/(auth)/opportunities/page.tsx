@@ -69,6 +69,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 const pipelineStages: (keyof Pipeline)[] = [
   'New Lead',
@@ -254,6 +255,7 @@ function FormworkPipeline() {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [oppToDelete, setOppToDelete] = useState<Lead | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const q = query(
@@ -286,11 +288,36 @@ function FormworkPipeline() {
       },
       (error) => {
         console.error('Error fetching opportunities:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not fetch opportunities.',
-        });
+        if (error.message.includes('requires an index')) {
+           const firestoreLinkRegex = /(https?:\/\/[^\s]+)/;
+          const match = error.message.match(firestoreLinkRegex);
+          if (match) {
+            toast({
+              variant: 'destructive',
+              title: 'Database Index Required',
+              description: (
+                <span>
+                  The Formwork Pipeline requires a database index to function.
+                  <a
+                    href={match[0]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-bold ml-1"
+                  >
+                    Click here to create it.
+                  </a>
+                </span>
+              ),
+              duration: Infinity,
+            });
+          }
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not fetch opportunities.',
+          });
+        }
         setLoading(false);
       }
     );
@@ -396,14 +423,23 @@ function FormworkPipeline() {
                         </div>
                       </CardContent>
                       <CardFooter className="p-4 pt-0">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => handleViewDetails(opp)}
-                        >
-                          View Details
-                        </Button>
+                        {user?.role === 'proposal' &&
+                        opp.status === 'Qualified' ? (
+                          <Button asChild size="sm" className="w-full">
+                            <Link href={`/proposal/${opp.id}`}>
+                              Create Proposal
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => handleViewDetails(opp)}
+                          >
+                            View Details
+                          </Button>
+                        )}
                       </CardFooter>
                     </Card>
                   ))}
