@@ -32,7 +32,8 @@ export default function ProposalDashboard() {
   useEffect(() => {
     const q = query(
       collection(db, 'leads'),
-      where('type', '==', 'Formwork')
+      where('type', '==', 'Formwork'),
+      where('status', '==', 'Qualified')
     );
 
     const unsubscribe = onSnapshot(
@@ -60,7 +61,7 @@ export default function ProposalDashboard() {
         <CardHeader>
           <CardTitle>Proposal Team Dashboard</CardTitle>
           <CardDescription>
-            Leads assigned for proposal creation.
+            Qualified leads that are ready for proposal creation.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -91,7 +92,7 @@ export default function ProposalDashboard() {
               ) : leads.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
-                    No formwork leads assigned.
+                    No qualified formwork leads assigned.
                   </TableCell>
                 </TableRow>
               ) : (

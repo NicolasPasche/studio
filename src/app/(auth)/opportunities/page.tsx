@@ -96,7 +96,10 @@ function OpportunityDetailsDialog({
 
   if (!opportunity) return null;
 
-  const canTakeAction = user?.role === 'admin' || user?.role === 'dev';
+  const canDelete = user?.role === 'admin' || user?.role === 'dev';
+  const canQualify = (user?.role === 'admin' || user?.role === 'dev' || user?.role === 'sales') && opportunity.status === 'New Lead';
+  const canAcceptOrReject = (user?.role === 'admin' || user?.role === 'dev') && opportunity.status === 'Proposal Sent';
+  const canMarkWonOrLost = (user?.role === 'admin' || user?.role === 'dev') && opportunity.status === 'Negotiation';
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -177,7 +180,7 @@ function OpportunityDetailsDialog({
         </ScrollArea>
         <DialogFooter className="pt-4 pr-4 sm:justify-between items-center">
           <div>
-            {canTakeAction && (
+            {canDelete && (
               <Button
                 variant="ghost"
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -190,7 +193,13 @@ function OpportunityDetailsDialog({
             )}
           </div>
           <div className="flex items-center gap-2">
-            {canTakeAction && opportunity.status === 'Proposal Sent' && (
+            {canQualify && (
+               <Button onClick={() => onStatusChange('Qualified')}>
+                  <ThumbsUp className="mr-2 h-4 w-4" />
+                  Qualify Lead
+              </Button>
+            )}
+            {canAcceptOrReject && (
               <div className="flex gap-2">
                 <Button
                   variant="destructive"
@@ -205,7 +214,7 @@ function OpportunityDetailsDialog({
                 </Button>
               </div>
             )}
-            {canTakeAction && opportunity.status === 'Negotiation' && (
+            {canMarkWonOrLost && (
               <div className="flex gap-2">
                 <Button
                   variant="destructive"
