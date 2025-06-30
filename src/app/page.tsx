@@ -45,12 +45,7 @@ export default function LoginPage() {
             'The email address is not valid. Please check and try again.';
           break;
         case 'auth/invalid-credential':
-          if (email === 'nicolas.pasche@proton.me') {
-            message =
-              'This is the dev account email. You must first go to the Sign Up page and CREATE this account. Click the "Sign up" link below.';
-          } else {
-            message = 'Invalid credentials. Please check your email and password.';
-          }
+          message = 'Invalid credentials. Please check your email and password.';
           break;
         case 'auth/user-disabled':
           message = 'This user account has been disabled.';
@@ -96,7 +91,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="nicolas.pasche@proton.me"
+                placeholder="your@email.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -115,6 +110,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
               />
             </div>
           </CardContent>
