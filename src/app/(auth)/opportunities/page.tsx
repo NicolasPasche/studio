@@ -427,6 +427,7 @@ function ScaffoldingLeadsTable() {
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const q = query(
@@ -543,14 +544,16 @@ function ScaffoldingLeadsTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteClick(lead)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
+                      {(user?.role === 'admin' || user?.role === 'dev') && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(lead)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
