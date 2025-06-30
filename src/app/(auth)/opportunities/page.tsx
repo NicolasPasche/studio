@@ -285,37 +285,12 @@ function FormworkPipeline() {
         setLoading(false);
       },
       (error) => {
-        console.error('Error fetching leads:', error);
-        if (error.message.includes('requires an index')) {
-          const firestoreLinkRegex = /(https?:\/\/[^\s]+)/;
-          const match = error.message.match(firestoreLinkRegex);
-          if (match) {
-            toast({
-              variant: 'destructive',
-              title: 'Database Index Required',
-              description: (
-                <span>
-                  The Formwork Pipeline requires a database index to function.
-                  <a
-                    href={match[0]}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline font-bold ml-1"
-                  >
-                    Click here to create it.
-                  </a>
-                </span>
-              ),
-              duration: Infinity,
-            });
-          }
-        } else {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not fetch opportunities.',
-            });
-        }
+        console.error('Error fetching opportunities:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not fetch opportunities.',
+        });
         setLoading(false);
       }
     );
