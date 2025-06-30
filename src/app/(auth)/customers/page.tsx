@@ -2,6 +2,17 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import {
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import {
   Card,
   CardContent,
   CardDescription,
@@ -55,11 +66,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MoreHorizontal, PlusCircle, Search } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
 
 type CustomerStatus = 'Active' | 'New' | 'Churned';
 
 type Customer = {
-  id: number;
+  id: string;
   name: string;
   contact: string;
   email: string;
@@ -67,19 +79,11 @@ type Customer = {
   segment: string;
 };
 
-const initialCustomers: Customer[] = [
-  { id: 1, name: 'Innovate Corp.', contact: 'John Doe', email: 'john.d@innovate.com', status: 'Active', segment: 'Tier 1' },
-  { id: 2, name: 'Data Systems', contact: 'Jane Smith', email: 'jane.s@datasys.com', status: 'Active', segment: 'Tier 2' },
-  { id: 3, name: 'Solutions Inc.', contact: 'Peter Jones', email: 'peter.j@solutions.com', status: 'New', segment: 'Tier 3' },
-  { id: 4, name: 'Quantum Tech', contact: 'Mary Brown', email: 'mary.b@quantum.com', status: 'Churned', segment: 'Tier 1' },
-  { id: 5, name: 'Future Gadgets', contact: 'Chris Green', email: 'chris.g@fg.io', status: 'Active', segment: 'Tier 2' },
-];
-
 interface CustomerFormDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   customer: Customer | null;
-  onSubmit: (customerData: Omit<Customer, 'id'> & { id?: number }) => void;
+  onSubmit: (customerData: Omit<Customer, 'id'> & { id?: string }) => void;
 }
 
 function CustomerFormDialog({ isOpen, onOpenChange, customer, onSubmit }: CustomerFormDialogProps) {
@@ -118,7 +122,7 @@ function CustomerFormDialog({ isOpen, onOpenChange, customer, onSubmit }: Custom
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const dataToSubmit: Omit<Customer, 'id'> & { id?: number } = { ...formData };
+        const dataToSubmit: Omit<Customer, 'id'> & { id?: string } = { ...formData };
         if (customer) {
           dataToSubmit.id = customer.id;
         }
@@ -189,12 +193,28 @@ function CustomerFormDialog({ isOpen, onOpenChange, customer, onSubmit }: Custom
 
 
 export default function CustomersPage() {
-    const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
     const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const q = query(collection(db, 'customers'), orderBy('name'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const customersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Customer[];
+            setCustomers(customersData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Firebase Error:", error);
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch customers."});
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, [toast]);
 
     const filteredCustomers = useMemo(() => {
         if (!searchTerm) return customers;
@@ -220,30 +240,37 @@ export default function CustomersPage() {
         setIsDeleteAlertOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (customerToDelete) {
-            setCustomers(customers.filter(c => c.id !== customerToDelete.id));
-            setCustomerToDelete(null);
+            try {
+                await deleteDoc(doc(db, 'customers', customerToDelete.id));
+                toast({ title: "Customer Deleted", description: `${customerToDelete.name} has been removed.`});
+                setCustomerToDelete(null);
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                toast({ variant: "destructive", title: "Error", description: "Could not delete customer."});
+            }
         }
         setIsDeleteAlertOpen(false);
     };
     
-    const handleFormSubmit = (customerData: Omit<Customer, 'id'> & { id?: number }) => {
-        if (customerData.id) {
-            setCustomers(customers.map(c => c.id === customerData.id ? { ...c, ...customerData, id: c.id, status: customerData.status as CustomerStatus } : c));
-        } else {
-            const newCustomer: Customer = {
-                id: Math.max(...customers.map(c => c.id), 0) + 1,
-                name: customerData.name,
-                contact: customerData.contact,
-                email: customerData.email,
-                status: customerData.status as CustomerStatus,
-                segment: customerData.segment,
-            };
-            setCustomers([...customers, newCustomer]);
+    const handleFormSubmit = async (customerData: Omit<Customer, 'id'> & { id?: string }) => {
+        try {
+            if (customerData.id) {
+                const { id, ...dataToUpdate } = customerData;
+                await updateDoc(doc(db, 'customers', id), dataToUpdate);
+                toast({ title: "Customer Updated", description: "Customer details have been saved." });
+            } else {
+                const { id, ...dataToAdd } = customerData;
+                await addDoc(collection(db, 'customers'), dataToAdd);
+                toast({ title: "Customer Added", description: `${customerData.name} has been added.`});
+            }
+            setIsFormOpen(false);
+            setEditingCustomer(null);
+        } catch (error) {
+            console.error("Error submitting form: ", error);
+            toast({ variant: "destructive", title: "Error", description: "Could not save customer details."});
         }
-        setIsFormOpen(false);
-        setEditingCustomer(null);
     };
 
     return (
@@ -286,7 +313,15 @@ export default function CustomersPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {filteredCustomers.map(customer => (
+                    {loading ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">Loading customers...</TableCell>
+                        </TableRow>
+                    ) : filteredCustomers.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">No customers found.</TableCell>
+                        </TableRow>
+                    ) : (filteredCustomers.map(customer => (
                     <TableRow key={customer.id}>
                         <TableCell className="font-medium">{customer.name}</TableCell>
                         <TableCell>{customer.contact}</TableCell>
@@ -322,7 +357,7 @@ export default function CustomersPage() {
                         </DropdownMenu>
                         </TableCell>
                     </TableRow>
-                    ))}
+                    )))}
                 </TableBody>
                 </Table>
             </CardContent>
