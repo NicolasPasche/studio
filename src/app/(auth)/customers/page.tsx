@@ -375,7 +375,7 @@ export default function CustomersPage() {
                         <Badge variant={
                             customer.status === 'Active' ? 'default' : 
                             customer.status === 'New' ? 'secondary' : 'destructive'
-                        } className={customer.status === 'Active' ? 'bg-accent' : ''}>
+                        } className={customer.status === 'Active' ? 'bg-accent text-accent-foreground' : ''}>
                             {customer.status}
                         </Badge>
                         </TableCell>

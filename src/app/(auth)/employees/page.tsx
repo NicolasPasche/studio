@@ -374,7 +374,7 @@ export default function EmployeesPage() {
                                 <Badge variant={
                                     employee.status === 'Active' ? 'default' : 
                                     employee.status === 'On Leave' ? 'secondary' : 'destructive'
-                                } className={employee.status === 'Active' ? 'bg-accent' : ''}>
+                                } className={employee.status === 'Active' ? 'bg-accent text-accent-foreground' : ''}>
                                     {employee.status}
                                 </Badge>
                             </TableCell>

@@ -43,11 +43,11 @@ const chartData = [
 const chartConfig = {
   sales: {
     label: "Sales ($k)",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--chart-2))",
   },
   target: {
     label: "Target ($k)",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(var(--chart-1))",
   },
 }
 
