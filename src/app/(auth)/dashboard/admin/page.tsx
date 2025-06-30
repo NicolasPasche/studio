@@ -81,15 +81,9 @@ export default function AdminDashboard() {
               </Link>
            </Button>
            <Button asChild variant="outline">
-              <Link href="/scaffolding-leads">
-                <Layers className="mr-2 h-4 w-4" />
-                Manage Scaffolding Leads
-              </Link>
-           </Button>
-            <Button asChild variant="outline">
               <Link href="/opportunities">
                 <Target className="mr-2 h-4 w-4" />
-                Manage Formwork Pipeline
+                Manage Opportunities
               </Link>
            </Button>
         </CardContent>

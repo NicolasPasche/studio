@@ -34,8 +34,7 @@ const navLinksByRole: Record<UserRole, { href: string; label: string; icon: Reac
     { href: "/users", label: "User Management", icon: UserCog },
     { href: "/customers", label: "Customer Mgmt", icon: Users },
     { href: "/employees", label: "Employee Mgmt", icon: Users2 },
-    { href: "/scaffolding-leads", label: "Scaffolding Leads", icon: Layers },
-    { href: "/opportunities", label: "Formwork Pipeline", icon: Target },
+    { href: "/opportunities", label: "Opportunities", icon: Target },
   ],
   proposal: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
