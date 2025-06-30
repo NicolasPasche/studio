@@ -6,8 +6,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 
 const pipeline = {
@@ -38,43 +37,47 @@ export default function OpportunitiesPage() {
                 <CardDescription>Visualize and manage your sales opportunities.</CardDescription>
             </CardHeader>
         </Card>
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="space-y-8">
             {(Object.keys(pipeline) as Stage[]).map(stage => (
-                <div key={stage} className="flex-shrink-0 w-80">
-                    <Card className="bg-secondary/50 h-full">
-                        <CardHeader>
-                            <CardTitle className="text-base flex justify-between items-center">
-                                <span>{stage}</span>
-                                <span className="text-sm font-normal text-muted-foreground bg-background rounded-full px-2 py-0.5">
-                                    ${pipeline[stage].reduce((sum, opp) => sum + opp.value, 0) / 1000}k
-                                </span>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            {pipeline[stage].map(opp => (
-                                <Card key={opp.id} className="hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
-                                    <CardHeader className="p-4">
-                                        <CardTitle className="text-sm font-medium">{opp.title}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-4 pt-0">
-                                        <div className="text-lg font-bold text-primary">${opp.value.toLocaleString()}</div>
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <Avatar className="h-6 w-6">
-                                                <AvatarFallback>{opp.contact.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="text-sm text-muted-foreground">{opp.contact}</span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                            {pipeline[stage].length === 0 && (
-                                <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
-                                    Drag opportunities here
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                <Card key={stage}>
+                    <CardHeader>
+                        <CardTitle className="text-xl flex justify-between items-center">
+                            <span>{stage}</span>
+                            <span className="text-lg font-semibold text-muted-foreground bg-secondary rounded-full px-4 py-1">
+                                ${pipeline[stage].reduce((sum, opp) => sum + opp.value, 0).toLocaleString()}
+                            </span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {pipeline[stage].length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                {pipeline[stage].map(opp => (
+                                    <Card key={opp.id} className="hover:shadow-md transition-shadow flex flex-col">
+                                        <CardHeader className="p-4">
+                                            <CardTitle className="text-base font-medium">{opp.title}</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-4 pt-0 flex-grow">
+                                            <div className="text-2xl font-bold text-primary">${opp.value.toLocaleString()}</div>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarFallback>{opp.contact.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="text-sm text-muted-foreground">{opp.contact}</span>
+                                            </div>
+                                        </CardContent>
+                                        <CardFooter className="p-4 pt-0">
+                                            <Button variant="outline" size="sm" className="w-full">View Details</Button>
+                                        </CardFooter>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center text-sm text-muted-foreground py-16 border-2 border-dashed rounded-lg">
+                                No opportunities in this stage.
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             ))}
         </div>
     </div>
