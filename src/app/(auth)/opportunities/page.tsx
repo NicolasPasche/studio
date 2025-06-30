@@ -205,6 +205,21 @@ function OpportunityDetailsDialog({
                 </Button>
               </div>
             )}
+            {canTakeAction && opportunity.status === 'Negotiation' && (
+              <div className="flex gap-2">
+                <Button
+                  variant="destructive"
+                  onClick={() => onStatusChange('Lost')}
+                >
+                  <ThumbsDown className="mr-2 h-4 w-4" />
+                  Mark as Lost
+                </Button>
+                <Button onClick={() => onStatusChange('Won')}>
+                  <ThumbsUp className="mr-2 h-4 w-4" />
+                  Mark as Won
+                </Button>
+              </div>
+            )}
              <DialogClose asChild>
                 <Button variant="outline">Close</Button>
             </DialogClose>
