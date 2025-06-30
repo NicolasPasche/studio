@@ -72,7 +72,7 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
           <Link href="/dashboard" className="flex items-center gap-2">
             <Icons.logo className="h-8 w-8 text-primary" />
             <span className="text-xl font-semibold font-headline group-data-[state=collapsed]:hidden">
-              Apex Workflow
+              Tobler Workflow
             </span>
           </Link>
         </SidebarHeader>

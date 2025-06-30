@@ -79,7 +79,7 @@ export default function LoginPage() {
           <div className="mb-4 flex justify-center">
             <Icons.logo className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-headline">Apex Workflow</CardTitle>
+          <CardTitle className="text-2xl font-headline">Tobler Workflow</CardTitle>
           <CardDescription>Sign in to access your dashboard</CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>

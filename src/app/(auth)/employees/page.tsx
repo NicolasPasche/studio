@@ -69,12 +69,12 @@ type Employee = {
 };
 
 const initialEmployees: Employee[] = [
-  { id: 1, name: 'Alex Johnson', email: 'alex.j@apex.com', role: 'Sales Lead', status: 'Active', department: 'Sales' },
-  { id: 2, name: 'Maria Garcia', email: 'maria.g@apex.com', role: 'System Administrator', status: 'Active', department: 'Management' },
-  { id: 3, name: 'David Chen', email: 'david.c@apex.com', role: 'Proposal Engineer', status: 'Active', department: 'Engineering' },
-  { id: 4, name: 'Sarah Lee', email: 'sarah.l@apex.com', role: 'HR Manager', status: 'On Leave', department: 'HR' },
-  { id: 5, name: 'Tom Wilson', email: 'tom.w@apex.com', role: 'Junior Engineer', status: 'Active', department: 'Engineering' },
-  { id: 6, name: 'Jessica Brown', email: 'jessica.b@apex.com', role: 'Sales Associate', status: 'Terminated', department: 'Sales' },
+  { id: 1, name: 'Alex Johnson', email: 'alex.j@tobler.com', role: 'Sales Lead', status: 'Active', department: 'Sales' },
+  { id: 2, name: 'Maria Garcia', email: 'maria.g@tobler.com', role: 'System Administrator', status: 'Active', department: 'Management' },
+  { id: 3, name: 'David Chen', email: 'david.c@tobler.com', role: 'Proposal Engineer', status: 'Active', department: 'Engineering' },
+  { id: 4, name: 'Sarah Lee', email: 'sarah.l@tobler.com', role: 'HR Manager', status: 'On Leave', department: 'HR' },
+  { id: 5, name: 'Tom Wilson', email: 'tom.w@tobler.com', role: 'Junior Engineer', status: 'Active', department: 'Engineering' },
+  { id: 6, name: 'Jessica Brown', email: 'jessica.b@tobler.com', role: 'Sales Associate', status: 'Terminated', department: 'Sales' },
 ];
 
 interface EmployeeFormDialogProps {

@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Apex Workflow',
-  description: 'Streamline your business processes with Apex Workflow.',
+  title: 'Tobler Workflow',
+  description: 'Streamline your business processes with Tobler Workflow.',
 };
 
 export default function RootLayout({
