@@ -4,12 +4,13 @@ import { getFirestore } from "firebase/firestore";
 
 // Your project's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AlzaSyAoSrv18i8U8nNgDRgro6bk2uLleLjDSME",
+  apiKey: "AIzaSyAoSrv18i8U8nNgDRgro6bk2uLIeLjDSME",
   authDomain: "apex-workflow-f3d61.firebaseapp.com",
   projectId: "apex-workflow-f3d61",
-  storageBucket: "apex-workflow-f3d61.appspot.com",
+  storageBucket: "apex-workflow-f3d61.firebasestorage.app",
   messagingSenderId: "705154707359",
-  appId: "1:705154707359:web:968f238561129f170438c8"
+  appId: "1:705154707359:web:fc52dbfb5ae668bd7b57aa",
+  measurementId: "G-3M0BVVL9V0"
 };
 
 // Initialize Firebase
