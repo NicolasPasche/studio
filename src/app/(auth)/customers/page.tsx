@@ -10,6 +10,7 @@ import {
   doc,
   query,
   orderBy,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
@@ -67,6 +68,7 @@ import {
 } from "@/components/ui/select";
 import { MoreHorizontal, PlusCircle, Search } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 type CustomerStatus = 'Active' | 'New' | 'Churned';
 
@@ -201,6 +203,7 @@ export default function CustomersPage() {
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
     const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
     const { toast } = useToast();
+    const { user } = useAuth();
 
     useEffect(() => {
         const q = query(collection(db, 'customers'), orderBy('name'));
@@ -241,9 +244,18 @@ export default function CustomersPage() {
     };
 
     const confirmDelete = async () => {
-        if (customerToDelete) {
+        if (customerToDelete && user) {
             try {
                 await deleteDoc(doc(db, 'customers', customerToDelete.id));
+
+                await addDoc(collection(db, 'activities'), {
+                    type: 'Customer Deleted',
+                    description: `Customer ${customerToDelete.name} was removed.`,
+                    timestamp: serverTimestamp(),
+                    userId: user.email,
+                    userName: user.name,
+                });
+
                 toast({ title: "Customer Deleted", description: `${customerToDelete.name} has been removed.`});
                 setCustomerToDelete(null);
             } catch (error) {
@@ -255,10 +267,24 @@ export default function CustomersPage() {
     };
     
     const handleFormSubmit = async (customerData: Omit<Customer, 'id'> & { id?: string }) => {
+        if (!user) {
+            toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in." });
+            return;
+        }
+
         try {
             if (customerData.id) {
                 const { id, ...dataToUpdate } = customerData;
                 await updateDoc(doc(db, 'customers', id), dataToUpdate);
+
+                await addDoc(collection(db, 'activities'), {
+                    type: 'Customer Updated',
+                    description: `Customer ${customerData.name} was updated.`,
+                    timestamp: serverTimestamp(),
+                    userId: user.email,
+                    userName: user.name,
+                });
+
                 toast({ title: "Customer Updated", description: "Customer details have been saved." });
             } else {
                 // Explicitly create the object to be added to prevent any issues.
@@ -270,6 +296,15 @@ export default function CustomersPage() {
                     segment: customerData.segment,
                 };
                 await addDoc(collection(db, 'customers'), dataToAdd);
+
+                 await addDoc(collection(db, 'activities'), {
+                    type: 'Customer Added',
+                    description: `Customer ${customerData.name} was added.`,
+                    timestamp: serverTimestamp(),
+                    userId: user.email,
+                    userName: user.name,
+                });
+
                 toast({ title: "Customer Added", description: `${customerData.name} has been added.`});
             }
             setIsFormOpen(false);

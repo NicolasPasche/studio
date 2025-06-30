@@ -8,6 +8,8 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  addDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { User, UserRole, roleDisplayNames } from '@/lib/auth';
@@ -72,6 +74,7 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
   const [role, setRole] = useState<UserRole>('sales');
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   const handleInvite = async () => {
     if (!email || !role) {
@@ -83,13 +86,28 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
       return;
     }
 
+    if (!currentUser) {
+        toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
+        return;
+    }
+
     try {
       const userRoleRef = doc(db, 'user_roles', email);
       await setDoc(userRoleRef, { role });
+
+      await addDoc(collection(db, 'activities'), {
+        type: 'User Invited',
+        description: `${email} was invited as a ${roleDisplayNames[role]}.`,
+        timestamp: serverTimestamp(),
+        userId: currentUser.email,
+        userName: currentUser.name,
+      });
+      
       toast({
         title: 'User Invited',
         description: `${email} has been invited as a ${roleDisplayNames[role]}. They can now sign up.`,
       });
+
       setIsOpen(false);
       setEmail('');
       setRole('sales');
@@ -196,12 +214,24 @@ export default function UserManagementPage() {
   }, []);
 
   const handleRoleChange = async (userId: string, email: string, newRole: UserRole) => {
+    if (!currentUser) {
+        toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in." });
+        return;
+    }
     try {
         const userDocRef = doc(db, "users", userId);
         const userRoleDocRef = doc(db, "user_roles", email);
 
         await updateDoc(userDocRef, { role: newRole });
         await setDoc(userRoleDocRef, { role: newRole });
+        
+        await addDoc(collection(db, 'activities'), {
+            type: 'Role Change',
+            description: `Role for ${email} changed to ${roleDisplayNames[newRole]}.`,
+            timestamp: serverTimestamp(),
+            userId: currentUser.email,
+            userName: currentUser.name,
+        });
 
         setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
 
@@ -225,10 +255,18 @@ export default function UserManagementPage() {
   };
 
   const confirmDelete = async () => {
-    if (!userToDelete) return;
+    if (!userToDelete || !currentUser) return;
     try {
       await deleteDoc(doc(db, 'users', userToDelete.id));
       await deleteDoc(doc(db, 'user_roles', userToDelete.email));
+
+      await addDoc(collection(db, 'activities'), {
+          type: 'User Deleted',
+          description: `User ${userToDelete.email} was removed.`,
+          timestamp: serverTimestamp(),
+          userId: currentUser.email,
+          userName: currentUser.name,
+      });
 
       toast({
         title: 'User Deleted',

@@ -4,7 +4,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
   Card,
@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 const leadSchema = z.object({
   contactName: z.string().min(2, { message: 'Contact name is required.' }),
@@ -80,6 +81,7 @@ export default function LeadCapturePage() {
 function LeadForm({ type }: { type: 'Scaffolding' | 'Formwork' }) {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
     defaultValues: {
@@ -96,12 +98,26 @@ function LeadForm({ type }: { type: 'Scaffolding' | 'Formwork' }) {
   const { isSubmitting } = form.formState;
 
   async function onSubmit(values: LeadFormValues) {
+    if (!user) {
+      toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to create a lead." });
+      return;
+    }
+
     try {
       await addDoc(collection(db, 'leads'), {
         ...values,
         status: 'New Lead', // Initial status
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
       });
+
+      await addDoc(collection(db, 'activities'), {
+        type: 'New Lead',
+        description: `Lead created for ${values.company}.`,
+        timestamp: serverTimestamp(),
+        userId: user.email,
+        userName: user.name,
+      });
+
       toast({
         title: 'Lead Submitted!',
         description: `The ${type} lead for ${values.company} has been created.`,

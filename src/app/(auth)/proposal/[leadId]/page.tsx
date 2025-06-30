@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Lead } from '@/lib/types';
 import {
@@ -20,12 +20,14 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Building, User, Mail, Phone, Send, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function CreateProposalPage() {
   const params = useParams();
   const leadId = params.leadId as string;
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,6 +76,10 @@ export default function CreateProposalPage() {
   };
 
   const handleSubmitProposal = async () => {
+    if (!user || !lead) {
+      toast({ variant: "destructive", title: "Error", description: "User or lead data is missing." });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const leadDocRef = doc(db, 'leads', leadId);
@@ -81,6 +87,15 @@ export default function CreateProposalPage() {
         proposalContent: proposal,
         status: 'Proposal Sent',
       });
+
+      await addDoc(collection(db, 'activities'), {
+        type: 'Proposal Sent',
+        description: `Proposal sent for ${lead.company}.`,
+        timestamp: serverTimestamp(),
+        userId: user.email,
+        userName: user.name,
+      });
+
       toast({ title: "Proposal Submitted!", description: "The proposal has been sent for review." });
       router.push('/opportunities');
     } catch (error) {

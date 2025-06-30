@@ -1,5 +1,10 @@
 "use client"
 
+import React, { useState, useEffect } from "react"
+import { collection, query, orderBy, onSnapshot, where, Timestamp } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import type { Activity } from '@/lib/types'
+import { formatDistanceToNow } from 'date-fns'
 import {
   Card,
   CardContent,
@@ -22,7 +27,8 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
-import { DollarSign, Target, Activity, Users } from "lucide-react"
+import { DollarSign, Target, Activity as ActivityIcon, Users } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 const chartData = [
   { month: "January", sales: 186, target: 200 },
@@ -44,14 +50,61 @@ const chartConfig = {
   },
 }
 
-const recentActivities = [
-  { id: 1, type: 'New Lead', name: 'John Doe', company: 'Innovate Corp.', time: '15m ago' },
-  { id: 2, type: 'Call Logged', name: 'Jane Smith', company: 'Data Systems', time: '1h ago' },
-  { id: 3, type: 'Proposal Sent', name: 'Peter Jones', company: 'Solutions Inc.', time: '3h ago' },
-  { id: 4, type: 'Deal Won', name: 'Mary Brown', company: 'Quantum Tech', time: '5h ago' },
-];
-
 export default function SalesDashboard() {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const threeDaysAgoTimestamp = Timestamp.fromDate(threeDaysAgo);
+
+    const q = query(
+      collection(db, 'activities'), 
+      where('timestamp', '>', threeDaysAgoTimestamp),
+      orderBy('timestamp', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const activitiesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Activity[];
+      setActivities(activitiesData);
+      setLoadingActivities(false);
+    }, (error) => {
+      console.error("Error fetching activities:", error);
+       if (error.message.includes('requires an index')) {
+          const firestoreLinkRegex = /(https?:\/\/[^\s]+)/;
+          const match = error.message.match(firestoreLinkRegex);
+          if (match) {
+            toast({
+              variant: 'destructive',
+              title: 'Database Index Required',
+              description: (
+                <span>
+                  The Recent Activities feed requires a database index.
+                  <a
+                    href={match[0]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-bold ml-1"
+                  >
+                    Click here to create it.
+                  </a>
+                </span>
+              ),
+              duration: Infinity,
+            });
+          }
+       }
+      setLoadingActivities(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -84,7 +137,7 @@ export default function SalesDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <ActivityIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+12.43%</div>
@@ -141,29 +194,41 @@ export default function SalesDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Recent Activities</CardTitle>
-            <CardDescription>A log of recent sales activities.</CardDescription>
+            <CardDescription>A log of recent sales activities from the last 3 days.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Type</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Company</TableHead>
+                  <TableHead>Activity</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead className="text-right">Time</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentActivities.map(activity => (
-                  <TableRow key={activity.id}>
-                    <TableCell>
-                      <Badge variant={activity.type === 'Deal Won' ? 'default' : 'secondary'} className={activity.type === 'Deal Won' ? 'bg-accent' : ''}>{activity.type}</Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{activity.name}</TableCell>
-                    <TableCell>{activity.company}</TableCell>
-                    <TableCell className="text-right">{activity.time}</TableCell>
+                {loadingActivities ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">Loading activities...</TableCell>
                   </TableRow>
-                ))}
+                ) : activities.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">No recent activities in the last 3 days.</TableCell>
+                  </TableRow>
+                ) : (
+                  activities.map(activity => (
+                    <TableRow key={activity.id}>
+                      <TableCell>
+                        <Badge variant="secondary">{activity.type}</Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{activity.description}</TableCell>
+                      <TableCell>{activity.userName}</TableCell>
+                      <TableCell className="text-right">
+                         {activity.timestamp ? formatDistanceToNow(activity.timestamp.toDate(), { addSuffix: true }) : 'N/A'}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>

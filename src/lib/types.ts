@@ -1,3 +1,5 @@
+import type { Timestamp } from "firebase/firestore";
+
 export interface Lead {
   id: string;
   contactName: string;
@@ -29,3 +31,12 @@ export type Pipeline = {
   Won: Lead[];
   Lost: Lead[];
 };
+
+export interface Activity {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: Timestamp;
+  userId: string;
+  userName: string;
+}

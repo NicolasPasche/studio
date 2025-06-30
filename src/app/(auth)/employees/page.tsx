@@ -2,6 +2,18 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import {
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import {
   Card,
   CardContent,
   CardDescription,
@@ -55,12 +67,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MoreHorizontal, PlusCircle, Search } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+
 
 type EmployeeStatus = 'Active' | 'On Leave' | 'Terminated';
 type Department = 'Sales' | 'Engineering' | 'HR' | 'Management';
 
 type Employee = {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: string;
@@ -68,20 +83,11 @@ type Employee = {
   department: Department;
 };
 
-const initialEmployees: Employee[] = [
-  { id: 1, name: 'Alex Johnson', email: 'alex.j@tobler.com', role: 'Sales Lead', status: 'Active', department: 'Sales' },
-  { id: 2, name: 'Maria Garcia', email: 'maria.g@tobler.com', role: 'System Administrator', status: 'Active', department: 'Management' },
-  { id: 3, name: 'David Chen', email: 'david.c@tobler.com', role: 'Proposal Engineer', status: 'Active', department: 'Engineering' },
-  { id: 4, name: 'Sarah Lee', email: 'sarah.l@tobler.com', role: 'HR Manager', status: 'On Leave', department: 'HR' },
-  { id: 5, name: 'Tom Wilson', email: 'tom.w@tobler.com', role: 'Junior Engineer', status: 'Active', department: 'Engineering' },
-  { id: 6, name: 'Jessica Brown', email: 'jessica.b@tobler.com', role: 'Sales Associate', status: 'Terminated', department: 'Sales' },
-];
-
 interface EmployeeFormDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   employee: Employee | null;
-  onSubmit: (employeeData: Omit<Employee, 'id'> & { id?: number }) => void;
+  onSubmit: (employeeData: Omit<Employee, 'id'> & { id?: string }) => void;
 }
 
 function EmployeeFormDialog({ isOpen, onOpenChange, employee, onSubmit }: EmployeeFormDialogProps) {
@@ -98,13 +104,16 @@ function EmployeeFormDialog({ isOpen, onOpenChange, employee, onSubmit }: Employ
             if (employee) {
                 setFormData(employee);
             } else {
-                setFormData({
+                // Reset for new employee
+                const { id, ...newEmployeeForm } = {
+                    id: '',
                     name: '',
                     email: '',
                     role: 'New Hire',
-                    status: 'Active',
-                    department: 'Sales',
-                });
+                    status: 'Active' as EmployeeStatus,
+                    department: 'Sales' as Department,
+                };
+                setFormData(newEmployeeForm);
             }
         }
     }, [isOpen, employee]);
@@ -120,7 +129,7 @@ function EmployeeFormDialog({ isOpen, onOpenChange, employee, onSubmit }: Employ
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const dataToSubmit: Omit<Employee, 'id'> & { id?: number } = { ...formData };
+        const dataToSubmit: Omit<Employee, 'id'> & { id?: string } = { ...formData };
         if (employee) {
           dataToSubmit.id = employee.id;
         }
@@ -191,12 +200,29 @@ function EmployeeFormDialog({ isOpen, onOpenChange, employee, onSubmit }: Employ
 }
 
 export default function EmployeesPage() {
-    const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
     const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+    const { toast } = useToast();
+    const { user } = useAuth();
+    
+    useEffect(() => {
+        const q = query(collection(db, 'employees'), orderBy('name'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const employeesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Employee[];
+            setEmployees(employeesData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Firebase Error:", error);
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch employees."});
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, [toast]);
 
     const filteredEmployees = useMemo(() => {
         if (!searchTerm) return employees;
@@ -221,30 +247,69 @@ export default function EmployeesPage() {
         setIsDeleteAlertOpen(true);
     };
 
-    const confirmDelete = () => {
-        if (employeeToDelete) {
-            setEmployees(employees.filter(e => e.id !== employeeToDelete.id));
-            setEmployeeToDelete(null);
+    const confirmDelete = async () => {
+        if (employeeToDelete && user) {
+            try {
+                await deleteDoc(doc(db, 'employees', employeeToDelete.id));
+
+                await addDoc(collection(db, 'activities'), {
+                    type: 'Employee Deleted',
+                    description: `Employee ${employeeToDelete.name} was removed.`,
+                    timestamp: serverTimestamp(),
+                    userId: user.email,
+                    userName: user.name,
+                });
+
+                toast({ title: "Employee Deleted", description: `${employeeToDelete.name} has been removed.`});
+                setEmployeeToDelete(null);
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                toast({ variant: "destructive", title: "Error", description: "Could not delete employee."});
+            }
         }
         setIsDeleteAlertOpen(false);
     };
     
-    const handleFormSubmit = (employeeData: Omit<Employee, 'id'> & { id?: number }) => {
-        if (employeeData.id) {
-            setEmployees(employees.map(e => e.id === employeeData.id ? { ...e, ...employeeData, id: e.id } : e));
-        } else {
-            const newEmployee: Employee = {
-                id: Math.max(...employees.map(e => e.id), 0) + 1,
-                name: employeeData.name,
-                email: employeeData.email,
-                role: employeeData.role,
-                status: employeeData.status,
-                department: employeeData.department,
-            };
-            setEmployees([...employees, newEmployee]);
+    const handleFormSubmit = async (employeeData: Omit<Employee, 'id'> & { id?: string }) => {
+        if (!user) {
+            toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in." });
+            return;
         }
-        setIsFormOpen(false);
-        setEditingEmployee(null);
+
+        try {
+            if (employeeData.id) {
+                const { id, ...dataToUpdate } = employeeData;
+                await updateDoc(doc(db, 'employees', id), dataToUpdate);
+                
+                await addDoc(collection(db, 'activities'), {
+                    type: 'Employee Updated',
+                    description: `Details for ${employeeData.name} were updated.`,
+                    timestamp: serverTimestamp(),
+                    userId: user.email,
+                    userName: user.name,
+                });
+
+                toast({ title: "Employee Updated", description: "Employee details have been saved." });
+            } else {
+                const { id, ...dataToAdd } = employeeData;
+                await addDoc(collection(db, 'employees'), dataToAdd);
+
+                await addDoc(collection(db, 'activities'), {
+                    type: 'Employee Added',
+                    description: `Employee ${employeeData.name} was added.`,
+                    timestamp: serverTimestamp(),
+                    userId: user.email,
+                    userName: user.name,
+                });
+
+                toast({ title: "Employee Added", description: `${employeeData.name} has been added.`});
+            }
+            setIsFormOpen(false);
+            setEditingEmployee(null);
+        } catch (error) {
+            console.error("Error submitting form: ", error);
+            toast({ variant: "destructive", title: "Error", description: "Could not save employee details."});
+        }
     };
 
     return (
@@ -287,7 +352,16 @@ export default function EmployeesPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredEmployees.map(employee => (
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">Loading employees...</TableCell>
+                            </TableRow>
+                        ) : filteredEmployees.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">No employees found.</TableCell>
+                            </TableRow>
+                        ) : (
+                        filteredEmployees.map(employee => (
                         <TableRow key={employee.id}>
                             <TableCell className="font-medium">{employee.name}<div className="text-sm text-muted-foreground">{employee.email}</div></TableCell>
                             <TableCell>{employee.role}</TableCell>
@@ -322,7 +396,7 @@ export default function EmployeesPage() {
                             </DropdownMenu>
                             </TableCell>
                         </TableRow>
-                        ))}
+                        )))}
                     </TableBody>
                     </Table>
                 </CardContent>
@@ -352,5 +426,3 @@ export default function EmployeesPage() {
         </>
     )
 }
-
-    

@@ -10,6 +10,8 @@ import {
   updateDoc,
   where,
   deleteDoc,
+  addDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Lead, Pipeline } from '@/lib/types';
@@ -331,11 +333,20 @@ function FormworkPipeline() {
   };
 
   const handleStatusChange = async (newStatus: Lead['status']) => {
-    if (!selectedOpp) return;
+    if (!selectedOpp || !user) return;
 
     try {
       const leadDocRef = doc(db, 'leads', selectedOpp.id);
       await updateDoc(leadDocRef, { status: newStatus });
+      
+      await addDoc(collection(db, 'activities'), {
+        type: 'Status Change',
+        description: `"${selectedOpp.company}" moved to ${newStatus}.`,
+        timestamp: serverTimestamp(),
+        userId: user.email,
+        userName: user.name,
+      });
+
       toast({
         title: 'Status Updated',
         description: `${selectedOpp.company} has been moved to ${newStatus}.`,
@@ -359,9 +370,18 @@ function FormworkPipeline() {
   };
 
   const confirmDelete = async () => {
-    if (oppToDelete) {
+    if (oppToDelete && user) {
       try {
         await deleteDoc(doc(db, 'leads', oppToDelete.id));
+        
+        await addDoc(collection(db, 'activities'), {
+          type: 'Lead Deleted',
+          description: `Lead for ${oppToDelete.company} was deleted.`,
+          timestamp: serverTimestamp(),
+          userId: user.email,
+          userName: user.name,
+        });
+
         toast({
           title: 'Opportunity Deleted',
           description: `The opportunity for ${oppToDelete.company} has been deleted.`,
@@ -556,9 +576,18 @@ function ScaffoldingLeadsTable() {
   };
 
   const confirmDelete = async () => {
-    if (leadToDelete) {
+    if (leadToDelete && user) {
       try {
         await deleteDoc(doc(db, 'leads', leadToDelete.id));
+
+        await addDoc(collection(db, 'activities'), {
+            type: 'Lead Deleted',
+            description: `Lead for ${leadToDelete.company} was deleted.`,
+            timestamp: serverTimestamp(),
+            userId: user.email,
+            userName: user.name,
+        });
+
         toast({
           title: 'Lead Deleted',
           description: `The lead for ${leadToDelete.company} has been deleted.`,
