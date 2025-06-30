@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -419,10 +420,11 @@ function FormworkPipeline() {
             <CardContent>
               {pipeline[stage].length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {pipeline[stage].map((opp) => (
+                  {pipeline[stage].map((opp, index) => (
                     <Card
                       key={opp.id}
-                      className="hover:shadow-md transition-shadow flex flex-col"
+                      className="hover:shadow-lg transition-all flex flex-col opacity-0 animate-fade-up hover:-translate-y-1"
+                      style={{ animationDelay: `${index * 75}ms` }}
                     >
                       <CardHeader className="p-4">
                         <CardTitle className="text-base font-medium">
@@ -632,8 +634,12 @@ function ScaffoldingLeadsTable() {
                   </TableCell>
                 </TableRow>
               ) : (
-                leads.map((lead) => (
-                  <TableRow key={lead.id}>
+                leads.map((lead, index) => (
+                  <TableRow 
+                    key={lead.id}
+                    className="opacity-0 animate-fade-up"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
                     <TableCell className="font-medium">
                       {lead.company}
                     </TableCell>

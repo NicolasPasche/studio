@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from "react";
@@ -109,7 +110,9 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
             )}
           <Header />
           <main className="flex-1 p-4 md:p-6 lg:p-8 bg-secondary/30">
-            {children}
+            <div className="opacity-0 animate-fade-in">
+              {children}
+            </div>
           </main>
         </div>
       </SidebarInset>

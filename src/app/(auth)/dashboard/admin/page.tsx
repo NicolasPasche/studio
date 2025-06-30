@@ -14,7 +14,7 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '100ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
@@ -24,7 +24,7 @@ export default function AdminDashboard() {
                 <p className="text-xs text-muted-foreground">+20 since last month</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '200ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
@@ -34,7 +34,7 @@ export default function AdminDashboard() {
                 <p className="text-xs text-muted-foreground">+120 this week</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '300ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">System Health</CardTitle>
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
                 <p className="text-xs text-muted-foreground">All systems operational</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '400ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Alerts</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-destructive" />

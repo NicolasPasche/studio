@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from "react"
@@ -108,7 +109,7 @@ export default function SalesDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
+        <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '100ms' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Monthly Sales
@@ -122,7 +123,7 @@ export default function SalesDashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '200ms' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">New Leads</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -134,7 +135,7 @@ export default function SalesDashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '300ms' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
             <ActivityIcon className="h-4 w-4 text-muted-foreground" />
@@ -146,7 +147,7 @@ export default function SalesDashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="opacity-0 animate-fade-up transition-transform hover:-translate-y-1" style={{ animationDelay: '400ms' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Target Progress</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
@@ -216,8 +217,8 @@ export default function SalesDashboard() {
                     <TableCell colSpan={4} className="h-24 text-center">No recent activities in the last 3 days.</TableCell>
                   </TableRow>
                 ) : (
-                  activities.map(activity => (
-                    <TableRow key={activity.id}>
+                  activities.map((activity, index) => (
+                    <TableRow key={activity.id} className="opacity-0 animate-fade-up" style={{ animationDelay: `${index * 50}ms` }}>
                       <TableCell>
                         <Badge variant="secondary">{activity.type}</Badge>
                       </TableCell>

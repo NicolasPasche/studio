@@ -363,8 +363,12 @@ export default function CustomersPage() {
                         <TableRow>
                             <TableCell colSpan={5} className="h-24 text-center">No customers found.</TableCell>
                         </TableRow>
-                    ) : (filteredCustomers.map(customer => (
-                    <TableRow key={customer.id}>
+                    ) : (filteredCustomers.map((customer, index) => (
+                    <TableRow 
+                        key={customer.id}
+                        className="opacity-0 animate-fade-up"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                    >
                         <TableCell className="font-medium">{customer.name}</TableCell>
                         <TableCell>{customer.contact}</TableCell>
                         <TableCell>
