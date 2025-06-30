@@ -151,24 +151,24 @@ function OpportunityDetailsDialog({
           </div>
         </ScrollArea>
         <DialogFooter className="pt-4 pr-4">
-          {canTakeAction && (
-            <div className="flex w-full justify-end gap-2">
-              <Button
-                variant="destructive"
-                onClick={() => onStatusChange('Lost')}
-              >
-                <ThumbsDown className="mr-2 h-4 w-4" />
-                Reject Proposal
-              </Button>
-              <Button onClick={() => onStatusChange('Negotiation')}>
-                <ThumbsUp className="mr-2 h-4 w-4" />
-                Accept Proposal
-              </Button>
-            </div>
-          )}
-          <DialogClose asChild>
-            <Button variant="outline">Close</Button>
-          </DialogClose>
+            {canTakeAction && (
+                <>
+                    <Button
+                        variant="destructive"
+                        onClick={() => onStatusChange('Lost')}
+                    >
+                        <ThumbsDown className="mr-2 h-4 w-4" />
+                        Reject Proposal
+                    </Button>
+                    <Button onClick={() => onStatusChange('Negotiation')}>
+                        <ThumbsUp className="mr-2 h-4 w-4" />
+                        Accept Proposal
+                    </Button>
+                </>
+            )}
+            <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+            </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
