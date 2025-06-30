@@ -261,7 +261,14 @@ export default function CustomersPage() {
                 await updateDoc(doc(db, 'customers', id), dataToUpdate);
                 toast({ title: "Customer Updated", description: "Customer details have been saved." });
             } else {
-                const { id, ...dataToAdd } = customerData;
+                // Explicitly create the object to be added to prevent any issues.
+                const dataToAdd = {
+                    name: customerData.name,
+                    contact: customerData.contact,
+                    email: customerData.email,
+                    status: customerData.status,
+                    segment: customerData.segment,
+                };
                 await addDoc(collection(db, 'customers'), dataToAdd);
                 toast({ title: "Customer Added", description: `${customerData.name} has been added.`});
             }
