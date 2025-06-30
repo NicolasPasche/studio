@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 
 // Your project's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAoSrv18i8U8nNgDRgro6bk2uLIeLjDSME",
+  apiKey: "AlzaSyAoSrv18i8U8nNgDRgro6bk2uLleLjDSME",
   authDomain: "apex-workflow-f3d61.firebaseapp.com",
   projectId: "apex-workflow-f3d61",
   storageBucket: "apex-workflow-f3d61.appspot.com",
