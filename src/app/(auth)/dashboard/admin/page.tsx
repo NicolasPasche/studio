@@ -1,9 +1,66 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Users, FileText, BarChart3, AlertTriangle } from "lucide-react";
 import { RecentActivities } from "@/components/recent-activities";
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Lead } from '@/lib/types';
 
 
 export default function AdminDashboard() {
+  const [userCount, setUserCount] = useState(0);
+  const [leadCount, setLeadCount] = useState(0);
+  const [newLeadsThisWeek, setNewLeadsThisWeek] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const usersQuery = collection(db, 'users');
+    const leadsQuery = collection(db, 'leads');
+
+    let loadedSources = 0;
+    const totalSources = 2;
+    const checkLoadingDone = () => {
+        loadedSources++;
+        if (loadedSources === totalSources) {
+            setLoading(false);
+        }
+    };
+
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+      setUserCount(snapshot.size);
+      checkLoadingDone();
+    }, (error) => {
+      console.error("Error fetching users count:", error);
+      checkLoadingDone();
+    });
+
+    const unsubscribeLeads = onSnapshot(leadsQuery, (snapshot) => {
+      const leadsData = snapshot.docs.map(doc => doc.data() as Lead);
+      setLeadCount(leadsData.length);
+
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      
+      const weeklyLeadsCount = leadsData.filter(lead => 
+        lead.createdAt && lead.createdAt.toDate() > oneWeekAgo
+      ).length;
+      
+      setNewLeadsThisWeek(weeklyLeadsCount);
+      checkLoadingDone();
+    }, (error) => {
+      console.error("Error fetching leads count:", error);
+      checkLoadingDone();
+    });
+
+    return () => {
+      unsubscribeUsers();
+      unsubscribeLeads();
+    };
+  }, []);
+
   return (
     <div className="space-y-6">
        <Card>
@@ -19,8 +76,8 @@ export default function AdminDashboard() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">1,257</div>
-                <p className="text-xs text-muted-foreground">+20 since last month</p>
+                {loading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{userCount}</div>}
+                <p className="text-xs text-muted-foreground">All registered users</p>
               </CardContent>
             </Card>
             <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '200ms' }}>
@@ -29,8 +86,8 @@ export default function AdminDashboard() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">4,832</div>
-                <p className="text-xs text-muted-foreground">+120 this week</p>
+                {loading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{leadCount}</div>}
+                {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+{newLeadsThisWeek} this week</p>}
               </CardContent>
             </Card>
             <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '300ms' }}>

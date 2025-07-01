@@ -3,7 +3,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { User, UserRole, users as mockUsers } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -71,7 +71,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           const userDocSnap = await getDoc(userDocRef);
           if (!userDocSnap.exists()) {
-              await setDoc(userDocRef, { role: userRole, email: firebaseUser.email, name: userData.name });
+              await setDoc(userDocRef, { 
+                role: userRole, 
+                email: firebaseUser.email, 
+                name: userData.name,
+                createdAt: serverTimestamp()
+              });
           }
           
           setRealUser(userData);
