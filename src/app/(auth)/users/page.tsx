@@ -7,7 +7,6 @@ import {
   doc,
   setDoc,
   updateDoc,
-  deleteDoc,
   addDoc,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -28,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -40,16 +39,6 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -60,7 +49,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { UserPlus, Shield, Briefcase, UserCog, Users, Code, Trash2 } from 'lucide-react';
+import { UserPlus, Shield, Briefcase, UserCog, Users, Code } from 'lucide-react';
 
 type DisplayUser = {
   id: string; // Firebase Auth UID
@@ -74,7 +63,7 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
   const [role, setRole] = useState<UserRole>('sales');
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { realUser } = useAuth();
 
   const handleInvite = async () => {
     if (!email || !role) {
@@ -86,7 +75,7 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
       return;
     }
 
-    if (!currentUser) {
+    if (!realUser) {
         toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
         return;
     }
@@ -99,8 +88,8 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
         type: 'User Invited',
         description: `${email} was invited as a ${roleDisplayNames[role]}.`,
         timestamp: serverTimestamp(),
-        userId: currentUser.email,
-        userName: currentUser.name,
+        userId: realUser.email,
+        userName: realUser.name,
       });
       
       toast({
@@ -182,11 +171,9 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
 export default function UserManagementPage() {
   const [users, setUsers] = useState<DisplayUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, realUser } = useAuth();
   const { toast } = useToast();
-  const [userToDelete, setUserToDelete] = useState<DisplayUser | null>(null);
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
-
+  
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -214,7 +201,7 @@ export default function UserManagementPage() {
   }, []);
 
   const handleRoleChange = async (userId: string, email: string, newRole: UserRole) => {
-    if (!currentUser) {
+    if (!realUser) {
         toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in." });
         return;
     }
@@ -229,8 +216,8 @@ export default function UserManagementPage() {
             type: 'Role Change',
             description: `Role for ${email} changed to ${roleDisplayNames[newRole]}.`,
             timestamp: serverTimestamp(),
-            userId: currentUser.email,
-            userName: currentUser.name,
+            userId: realUser.email,
+            userName: realUser.name,
         });
 
         setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
@@ -248,43 +235,6 @@ export default function UserManagementPage() {
         });
     }
   };
-
-  const handleDeleteClick = (user: DisplayUser) => {
-    setUserToDelete(user);
-    setIsAlertOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!userToDelete || !currentUser) return;
-    try {
-      await deleteDoc(doc(db, 'users', userToDelete.id));
-      await deleteDoc(doc(db, 'user_roles', userToDelete.email));
-
-      await addDoc(collection(db, 'activities'), {
-          type: 'User Deleted',
-          description: `User ${userToDelete.email} was removed.`,
-          timestamp: serverTimestamp(),
-          userId: currentUser.email,
-          userName: currentUser.name,
-      });
-
-      toast({
-        title: 'User Deleted',
-        description: `User ${userToDelete.email} has been removed and their access revoked.`,
-      });
-      setUserToDelete(null);
-      fetchUsers();
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Deletion Failed',
-        description: 'Could not delete the user.',
-      });
-    }
-    setIsAlertOpen(false);
-  };
-
 
   return (
     <>
@@ -307,22 +257,20 @@ export default function UserManagementPage() {
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead className="w-[220px]">Role</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                   <TableRow>
-                      <TableCell colSpan={4} className="text-center">Loading users...</TableCell>
+                      <TableCell colSpan={3} className="text-center">Loading users...</TableCell>
                   </TableRow>
               ) : users.length === 0 ? (
                   <TableRow>
-                      <TableCell colSpan={4} className="text-center h-24">No users found.</TableCell>
+                      <TableCell colSpan={3} className="text-center h-24">No users found.</TableCell>
                   </TableRow>
               ) : (
                   users.map((user) => {
                     const isCurrentUser = currentUser?.email === user.email;
-                    const canDelete = !isCurrentUser && user.role !== 'dev';
                     return (
                       <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.name}</TableCell>
@@ -351,14 +299,6 @@ export default function UserManagementPage() {
                               </Select>
                           )}
                           </TableCell>
-                          <TableCell className="text-right">
-                            {canDelete && (
-                              <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(user)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                                <span className="sr-only">Delete User</span>
-                              </Button>
-                            )}
-                          </TableCell>
                       </TableRow>
                     )
                   })
@@ -367,21 +307,6 @@ export default function UserManagementPage() {
           </Table>
         </CardContent>
       </Card>
-      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the user
-              and their associated role, revoking all access.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setUserToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
