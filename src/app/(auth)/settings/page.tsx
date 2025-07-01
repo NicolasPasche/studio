@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
@@ -29,14 +29,33 @@ export default function SettingsPage() {
   const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
   const [isPushLoading, setIsPushLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for notification support and permission status after component mounts
-    if ('Notification' in window) {
-      setPushPermission(Notification.permission);
-      setIsPushEnabled(Notification.permission === 'granted');
+  const syncPermissions = useCallback(() => {
+    if (!('Notification' in window)) {
+        setIsPushLoading(false);
+        return;
     }
+    const currentPermission = Notification.permission;
+    setPushPermission(currentPermission);
+    setIsPushEnabled(currentPermission === 'granted');
     setIsPushLoading(false);
   }, []);
+
+
+  useEffect(() => {
+    syncPermissions();
+
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            syncPermissions();
+        }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+        window.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [syncPermissions]);
 
   const handlePushToggle = async (checked: boolean) => {
     if (isPushLoading) return;
@@ -63,11 +82,13 @@ export default function SettingsPage() {
             // and save the push subscription to your database here.
         } else {
             setIsPushEnabled(false);
-            toast({
-                variant: "destructive",
-                title: "Permission Denied",
-                description: "To get notifications, please enable them in your browser settings.",
-            });
+            if (permission === 'denied') {
+              toast({
+                  variant: "destructive",
+                  title: "Permission Denied",
+                  description: "To get notifications, please enable them in your browser settings.",
+              });
+            }
         }
     } else {
         // In a full implementation, you would unsubscribe the user here.
