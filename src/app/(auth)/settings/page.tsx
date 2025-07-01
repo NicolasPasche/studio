@@ -16,9 +16,68 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import React, { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  const [isPushEnabled, setIsPushEnabled] = useState(false);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
+  const [isPushLoading, setIsPushLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for notification support and permission status after component mounts
+    if ('Notification' in window) {
+      setPushPermission(Notification.permission);
+      setIsPushEnabled(Notification.permission === 'granted');
+    }
+    setIsPushLoading(false);
+  }, []);
+
+  const handlePushToggle = async (checked: boolean) => {
+    if (isPushLoading) return;
+
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        toast({
+            variant: "destructive",
+            title: "Unsupported Browser",
+            description: "This browser does not support push notifications.",
+        });
+        return;
+    }
+
+    if (checked) {
+        const permission = await Notification.requestPermission();
+        setPushPermission(permission);
+        if (permission === 'granted') {
+            setIsPushEnabled(true);
+            toast({
+                title: "Notifications Enabled!",
+                description: "You'll now receive updates on this device.",
+            });
+            // In a full implementation, you'd register a service worker
+            // and save the push subscription to your database here.
+        } else {
+            setIsPushEnabled(false);
+            toast({
+                variant: "destructive",
+                title: "Permission Denied",
+                description: "To get notifications, please enable them in your browser settings.",
+            });
+        }
+    } else {
+        // In a full implementation, you would unsubscribe the user here.
+        setIsPushEnabled(false);
+        toast({
+            title: "Notifications Disabled",
+            description: "You will no longer receive push notifications on this device.",
+        });
+    }
+  };
   
   if (!user) {
     return (
@@ -122,8 +181,22 @@ export default function SettingsPage() {
                       Get real-time alerts on your devices.
                     </span>
                   </Label>
-                  <Switch id="push-notifications" />
+                  <Switch 
+                    id="push-notifications"
+                    checked={isPushEnabled}
+                    onCheckedChange={handlePushToggle}
+                    disabled={isPushLoading || pushPermission === 'denied'}
+                  />
                 </div>
+                 {pushPermission === 'denied' && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Notifications Blocked</AlertTitle>
+                    <AlertDescription>
+                      You have blocked push notifications. To use this feature, you must enable them in your browser settings.
+                    </AlertDescription>
+                  </Alert>
+                )}
             </CardContent>
             <CardFooter>
               <Button>Save Preferences</Button>
