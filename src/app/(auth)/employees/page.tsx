@@ -365,7 +365,7 @@ export default function EmployeesPage() {
                         <TableRow 
                             key={employee.id}
                             className="opacity-0 animate-fade-up"
-                            style={{ animationDelay: `${index * 50}ms` }}
+                            style={{ animationDelay: `${index * 100}ms` }}
                         >
                             <TableCell className="font-medium">{employee.name}<div className="text-sm text-muted-foreground">{employee.email}</div></TableCell>
                             <TableCell>{employee.role}</TableCell>

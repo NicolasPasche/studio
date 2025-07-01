@@ -424,7 +424,7 @@ function FormworkPipeline() {
                     <Card
                       key={opp.id}
                       className="transition-all duration-300 flex flex-col opacity-0 animate-fade-up hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]"
-                      style={{ animationDelay: `${index * 75}ms` }}
+                      style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <CardHeader className="p-4">
                         <CardTitle className="text-base font-medium">
@@ -638,7 +638,7 @@ function ScaffoldingLeadsTable() {
                   <TableRow 
                     key={lead.id}
                     className="opacity-0 animate-fade-up"
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <TableCell className="font-medium">
                       {lead.company}

@@ -367,7 +367,7 @@ export default function CustomersPage() {
                     <TableRow 
                         key={customer.id}
                         className="opacity-0 animate-fade-up"
-                        style={{ animationDelay: `${index * 50}ms` }}
+                        style={{ animationDelay: `${index * 100}ms` }}
                     >
                         <TableCell className="font-medium">{customer.name}</TableCell>
                         <TableCell>{customer.contact}</TableCell>

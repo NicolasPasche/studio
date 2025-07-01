@@ -127,7 +127,7 @@ export function RecentActivities({ className }: { className?: string }) {
                             </TableRow>
                             ) : (
                             activities.map((activity, index) => (
-                                <TableRow key={activity.id} className="opacity-0 animate-fade-up" style={{ animationDelay: `${index * 50}ms` }}>
+                                <TableRow key={activity.id} className="opacity-0 animate-fade-up" style={{ animationDelay: `${index * 100}ms` }}>
                                 <TableCell>
                                     <Badge variant="secondary">{activity.type}</Badge>
                                 </TableCell>
