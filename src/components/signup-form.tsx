@@ -92,7 +92,7 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
         }
     };
 
-    const successMessage = "Your account has been created. We've sent a verification link to your email. Please check your inbox and click the link to activate your account before you can sign in.";
+    const successMessage = "Your account has been created. We've sent a verification link to your email. Please check your inbox (and spam folder!) and click the link to activate your account before you can sign in.";
 
 
     return (
@@ -106,9 +106,9 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
             </CardHeader>
             {success ? (
                 <CardContent className="space-y-4">
-                    <Alert variant="default" className="border-accent bg-accent/10">
-                        <CheckCircle className="h-4 w-4 text-accent" />
-                        <AlertTitle className="text-accent">Verification Email Sent</AlertTitle>
+                    <Alert variant="default" className="border-green-500/50 bg-green-500/10">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <AlertTitle className="text-green-600">Verification Email Sent</AlertTitle>
                         <AlertDescription>
                            {successMessage}
                         </AlertDescription>
