@@ -30,11 +30,11 @@ const navLinksByRole: Record<UserRole, { href: string; label: string; icon: Reac
   ],
   admin: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/system-health", label: "System Health", icon: BarChart3 },
     { href: "/users", label: "User Management", icon: UserCog },
     { href: "/customers", label: "Customer Mgmt", icon: Users },
     { href: "/employees", label: "Employee Mgmt", icon: Users2 },
     { href: "/opportunities", label: "Opportunities", icon: Target },
+    { href: "/system-health", label: "System Health", icon: BarChart3 },
   ],
   proposal: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
