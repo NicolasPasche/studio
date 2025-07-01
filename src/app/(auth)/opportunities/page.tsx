@@ -537,6 +537,25 @@ function FormworkPipeline() {
             userName: user.name,
         });
 
+        if (closingDetails.status === 'Won') {
+            const customerData = {
+                name: selectedOpp.company,
+                contact: selectedOpp.contactName,
+                email: selectedOpp.email,
+                status: 'New', // Set as 'New' customer
+                segment: 'Tier 3', // Default segment
+            };
+            await addDoc(collection(db, 'customers'), customerData);
+
+            await addDoc(collection(db, 'activities'), {
+                type: 'Customer Created',
+                description: `Customer ${selectedOpp.company} created from a won opportunity.`,
+                timestamp: serverTimestamp(),
+                userId: user.email,
+                userName: user.name,
+            });
+        }
+
         toast({
             title: 'Status Updated',
             description: `${selectedOpp.company} has been moved to ${closingDetails.status}.`,
