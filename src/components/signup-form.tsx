@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createUserWithEmailAndPassword, updateProfile, signOut, sendEmailVerification } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { UserRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -51,15 +51,25 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                 displayName: name,
             });
 
-            await sendEmailVerification(userCredential.user);
+            // If a specific role is assigned (dev, admin), create the user document directly.
+            // This is for self-service sign-up pages.
+            if (roleToAssign) {
+                 const userDocRef = doc(db, "users", userCredential.user.uid);
+                 await setDoc(userDocRef, {
+                    name: name,
+                    email: email,
+                    role: roleToAssign,
+                    createdAt: serverTimestamp()
+                 });
 
-            // For dev roles, access is hardcoded in the AuthProvider.
-            // For other special roles (like admin), we attempt to write to the user_roles collection.
-            // This write will fail unless Firestore rules are configured to allow it.
-            if (roleToAssign && roleToAssign !== 'dev') {
+                 // For regular users, their role is defined by an admin in the `user_roles` collection,
+                 // and their user doc is created on first login by the AuthProvider.
+            } else {
                 const userRoleRef = doc(db, 'user_roles', email);
-                await setDoc(userRoleRef, { role: roleToAssign });
+                await setDoc(userRoleRef, { role: 'sales' }); // Default role for general sign-up
             }
+
+            await sendEmailVerification(userCredential.user);
 
             // Sign out the user immediately after sign up, so they have to log in AFTER verification.
             await signOut(auth);
@@ -89,7 +99,7 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                     break;
                  case 'permission-denied':
                  case 'auth/insufficient-permission':
-                    message = "An unexpected error occurred: Missing or insufficient permissions.";
+                    message = "An unexpected error occurred: Missing or insufficient permissions. This may happen if the `user_roles` collection is not properly secured.";
                     break;
                 default:
                     message = `An unexpected error occurred: ${err.message}`;

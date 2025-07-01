@@ -26,64 +26,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // DEV BACKDOOR: Allow role simulation via query parameter
-    const searchParams = new URLSearchParams(window.location.search);
-    const devRole = searchParams.get("dev_role") as UserRole | null;
-
-    if (process.env.NODE_ENV === "development" && devRole && mockUsers[devRole]) {
-      console.log(`DEV MODE: Simulating login for role: ${devRole}`);
-      const simulatedUser = mockUsers[devRole];
-      setRealUser(simulatedUser);
-      // For the backdoor, user and realUser are the same
-      setLoading(false);
-      return; // Skip Firebase auth listener setup
-    }
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       setLoading(true);
       setImpersonatedRole(null); // Reset impersonation on auth state change
 
       if (firebaseUser && firebaseUser.email) {
+        // 1. Check if the user document already exists in the 'users' collection.
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
         let userRole: UserRole | null = null;
-        
-        // Special case for dev users
-        const devEmails = ['nicolas.pasche@proton.me', 'nicolas.pasche@ksh.edu'];
-        if (devEmails.includes(firebaseUser.email)) {
-            userRole = 'dev';
-        } else {
-            // 1. Check user_roles collection for other users
-            const roleDocRef = doc(db, "user_roles", firebaseUser.email);
-            const roleDocSnap = await getDoc(roleDocRef);
-            if (roleDocSnap.exists()) {
-                userRole = roleDocSnap.data().role as UserRole;
-            }
-        }
+        let userDataFromDb: User | null = null;
 
-        if (userRole) {
-          // 2. Create/update user in users collection
-          const userDocRef = doc(db, "users", firebaseUser.uid);
-          
-          const userData: User = {
-            name: firebaseUser.displayName || firebaseUser.email,
+        if (userDocSnap.exists()) {
+          // User document exists, get role from there. This is the primary source of truth.
+          const dbData = userDocSnap.data();
+          userRole = dbData.role;
+          userDataFromDb = {
+            name: dbData.name || firebaseUser.displayName || firebaseUser.email,
             email: firebaseUser.email,
-            role: userRole,
-            avatar: mockUsers[userRole]?.avatar || "",
-            initials: (firebaseUser.displayName || firebaseUser.email).substring(0, 2).toUpperCase(),
+            role: userRole!,
+            avatar: mockUsers[userRole!]?.avatar || "",
+            initials: (dbData.name || firebaseUser.displayName || firebaseUser.email).substring(0, 2).toUpperCase(),
           };
-
-          const userDocSnap = await getDoc(userDocRef);
-          if (!userDocSnap.exists()) {
-              await setDoc(userDocRef, { 
+        } else {
+          // 2. If user doc doesn't exist, this might be a first login for an invited user.
+          // Check the 'user_roles' collection.
+          const roleDocRef = doc(db, "user_roles", firebaseUser.email);
+          const roleDocSnap = await getDoc(roleDocRef);
+          if (roleDocSnap.exists()) {
+              userRole = roleDocSnap.data().role as UserRole;
+              
+              // Now create the user document in 'users' collection
+              const newUserDocData = { 
                 role: userRole, 
                 email: firebaseUser.email, 
-                name: userData.name,
+                name: firebaseUser.displayName || firebaseUser.email,
                 createdAt: serverTimestamp()
-              });
+              };
+              await setDoc(userDocRef, newUserDocData);
+
+              userDataFromDb = {
+                name: newUserDocData.name,
+                email: firebaseUser.email,
+                role: userRole,
+                avatar: mockUsers[userRole]?.avatar || "",
+                initials: (newUserDocData.name).substring(0, 2).toUpperCase(),
+              };
           }
-          
-          setRealUser(userData);
+        }
+        
+        if (userDataFromDb) {
+            setRealUser(userDataFromDb);
         } else {
-          // 3. Email not in user_roles, sign out and show error
+          // 3. User is not in 'users' or 'user_roles'. Deny access.
           toast({
             variant: "destructive",
             title: "Access Denied",
@@ -93,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRealUser(null);
           router.replace("/");
         }
+
       } else {
         setRealUser(null);
       }
