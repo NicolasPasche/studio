@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -52,7 +53,10 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
 
             await sendEmailVerification(userCredential.user);
 
-            if (roleToAssign) {
+            // For dev roles, access is hardcoded in the AuthProvider.
+            // For other special roles (like admin), we attempt to write to the user_roles collection.
+            // This write will fail unless Firestore rules are configured to allow it.
+            if (roleToAssign && roleToAssign !== 'dev') {
                 const userRoleRef = doc(db, 'user_roles', email);
                 await setDoc(userRoleRef, { role: roleToAssign });
             }
@@ -82,6 +86,10 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                 case 'auth/app-deleted':
                 case 'auth/invalid-app-credential':
                     message = "Network error or invalid configuration. Please check your internet connection and Firebase project setup in `src/lib/firebase.ts`.";
+                    break;
+                 case 'permission-denied':
+                 case 'auth/insufficient-permission':
+                    message = "An unexpected error occurred: Missing or insufficient permissions.";
                     break;
                 default:
                     message = `An unexpected error occurred: ${err.message}`;

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useState, useEffect, ReactNode, useMemo } from "react";
@@ -45,8 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser && firebaseUser.email) {
         let userRole: UserRole | null = null;
         
-        // Special case for dev user
-        if (firebaseUser.email === 'nicolas.pasche@proton.me') {
+        // Special case for dev users
+        const devEmails = ['nicolas.pasche@proton.me', 'nicolas.pasche@ksh.edu'];
+        if (devEmails.includes(firebaseUser.email)) {
             userRole = 'dev';
         } else {
             // 1. Check user_roles collection for other users
