@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Users, FileText, BarChart3, AlertTriangle } from "lucide-react";
@@ -23,10 +23,9 @@ export default function AdminDashboard() {
   useEffect(() => {
     const usersQuery = collection(db, 'users');
     const leadsQuery = collection(db, 'leads');
-    const alertsQuery = collection(db, 'alerts');
 
     let loadedSources = 0;
-    const totalSources = 3;
+    const totalSources = 2; // We are only loading users and leads for now
     const checkLoadingDone = () => {
         loadedSources++;
         if (loadedSources === totalSources) {
@@ -60,19 +59,13 @@ export default function AdminDashboard() {
       checkLoadingDone();
     });
 
-    const unsubscribeAlerts = onSnapshot(alertsQuery, (snapshot) => {
-      setAlertCount(snapshot.size);
-      checkLoadingDone();
-    }, (error) => {
-      console.error("Error fetching alerts count:", error);
-      setAlertCount(0);
-      checkLoadingDone();
-    });
+    // Note: Alert count is static for now to avoid permission errors.
+    // To make this dynamic, create an 'alerts' collection in Firestore
+    // and set security rules to allow admins to read from it.
 
     return () => {
       unsubscribeUsers();
       unsubscribeLeads();
-      unsubscribeAlerts();
     };
   }, []);
 
