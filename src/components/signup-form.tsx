@@ -46,14 +46,17 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
         setSuccess(false);
 
         try {
+            // 1. Create the user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await updateProfile(userCredential.user, {
+            const user = userCredential.user;
+
+            // 2. Update their profile with their name
+            await updateProfile(user, {
                 displayName: name,
             });
 
-            // Create the user document in Firestore immediately for all sign-ups.
-            // The role is either the one provided (for dev/admin pages) or defaults to 'sales'.
-            const userDocRef = doc(db, "users", userCredential.user.uid);
+            // 3. Create their user record in the database
+            const userDocRef = doc(db, "users", user.uid);
             await setDoc(userDocRef, {
                name: name,
                email: email,
@@ -61,11 +64,15 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                createdAt: serverTimestamp()
             });
 
-            await sendEmailVerification(userCredential.user);
+            // 4. Send the verification email
+            await sendEmailVerification(user);
 
-            // Sign out the user immediately after sign up, so they have to log in AFTER verification.
+            // 5. Sign the user out until they verify
             await signOut(auth);
+
+            // 6. Show the success message
             setSuccess(true);
+
         } catch (err: any) {
             console.error("Firebase Auth Error:", err);
             let message;
@@ -91,7 +98,7 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                     break;
                  case 'permission-denied':
                  case 'auth/insufficient-permission':
-                    message = "An unexpected error occurred: Missing or insufficient permissions. This may happen if the `user_roles` collection is not properly secured.";
+                    message = "An unexpected error occurred: Missing or insufficient permissions. This may happen if Firestore rules are not set correctly.";
                     break;
                 default:
                     message = `An unexpected error occurred: ${err.message}`;

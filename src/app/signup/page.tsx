@@ -34,33 +34,32 @@ export default function LoginPage() {
     setError('');
 
     try {
+      // 1. Sign in the user
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      // IMPORTANT: Reload the user object to get the latest emailVerified state from Firebase.
       const user = userCredential.user;
+
+      // 2. IMPORTANT: Reload user data to get the latest emailVerified state
       await user.reload();
 
-      // Now, get the user's role from Firestore to check for the developer exception.
+      // 3. Check if user is a developer (for bypass)
       const userDocRef = doc(db, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
-
       const isDevUser = userDocSnap.exists() && userDocSnap.data().role === 'dev';
       
-      // Check for verification. Dev users are exempt.
-      if (!user.emailVerified && !isDevUser) {
-        await signOut(auth); // Sign out the unverified user.
+      // 4. Check for verification. Allow access if verified OR if they are a dev user.
+      if (user.emailVerified || isDevUser) {
+        // Login successful, proceed to dashboard
+        router.push('/dashboard');
+      } else {
+        // Not verified and not a dev, so sign them out and show an error.
+        await signOut(auth); 
         setError("Please verify your email address before logging in. Check your inbox (and spam folder!) for a verification link.");
         setLoading(false);
-        return; // Stop the login process.
       }
-      
-      // If verified (or a dev user), proceed to the dashboard.
-      router.push('/dashboard');
 
     } catch (err: any) {
       console.error('Firebase Auth Error:', err);
       let message;
-
       switch (err.code) {
         case 'auth/invalid-email':
           message =
@@ -73,12 +72,7 @@ export default function LoginPage() {
           message = 'This user account has been disabled.';
           break;
         case 'auth/network-request-failed':
-        case 'auth/invalid-api-key':
-        case 'auth/api-key-not-valid':
-        case 'auth/app-deleted':
-        case 'auth/invalid-app-credential':
-          message =
-            'Network error or invalid configuration. Please check your internet connection and Firebase project setup in `src/lib/firebase.ts`.';
+          message = 'Network error. Please check your internet connection.';
           break;
         default:
           message = `An unexpected error occurred: ${err.message}`;
