@@ -1,9 +1,11 @@
+
 'use client';
 import React, {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
 import {signInWithEmailAndPassword, signOut} from 'firebase/auth';
-import {auth} from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import {auth, db} from '@/lib/firebase';
 import {Button} from '@/components/ui/button';
 import {
   Card,
@@ -34,8 +36,14 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // Allow dev user to bypass email verification
-      const isDevUser = userCredential.user.email === 'nicolas.pasche@proton.me';
+      // Get user role from Firestore to check if they are a dev
+      const userDocRef = doc(db, "users", userCredential.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      let isDevUser = false;
+      if (userDocSnap.exists() && userDocSnap.data().role === 'dev') {
+        isDevUser = true;
+      }
       
       if (!userCredential.user.emailVerified && !isDevUser) {
         await signOut(auth);
