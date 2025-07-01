@@ -36,25 +36,28 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // Get user role from Firestore to check if they are a dev
-      const userDocRef = doc(db, "users", userCredential.user.uid);
+      // IMPORTANT: Reload the user object to get the latest emailVerified state from Firebase.
+      const user = userCredential.user;
+      await user.reload();
+
+      // Now, get the user's role from Firestore to check for the developer exception.
+      const userDocRef = doc(db, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
-      let isDevUser = false;
-      if (userDocSnap.exists() && userDocSnap.data().role === 'dev') {
-        isDevUser = true;
-      }
+      const isDevUser = userDocSnap.exists() && userDocSnap.data().role === 'dev';
       
-      if (!userCredential.user.emailVerified && !isDevUser) {
-        await signOut(auth);
+      // Check for verification. Dev users are exempt.
+      if (!user.emailVerified && !isDevUser) {
+        await signOut(auth); // Sign out the unverified user.
         setError("Please verify your email address before logging in. Check your inbox (and spam folder!) for a verification link.");
         setLoading(false);
-        return;
+        return; // Stop the login process.
       }
       
+      // If verified (or a dev user), proceed to the dashboard.
       router.push('/dashboard');
-    } catch (err: any)
-    {
+
+    } catch (err: any) {
       console.error('Firebase Auth Error:', err);
       let message;
 
