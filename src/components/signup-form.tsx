@@ -51,23 +51,15 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                 displayName: name,
             });
 
-            // If a specific role is assigned (dev, admin), create the user document directly.
-            // This is for self-service sign-up pages.
-            if (roleToAssign) {
-                 const userDocRef = doc(db, "users", userCredential.user.uid);
-                 await setDoc(userDocRef, {
-                    name: name,
-                    email: email,
-                    role: roleToAssign,
-                    createdAt: serverTimestamp()
-                 });
-
-                 // For regular users, their role is defined by an admin in the `user_roles` collection,
-                 // and their user doc is created on first login by the AuthProvider.
-            } else {
-                const userRoleRef = doc(db, 'user_roles', email);
-                await setDoc(userRoleRef, { role: 'sales' }); // Default role for general sign-up
-            }
+            // Create the user document in Firestore immediately for all sign-ups.
+            // The role is either the one provided (for dev/admin pages) or defaults to 'sales'.
+            const userDocRef = doc(db, "users", userCredential.user.uid);
+            await setDoc(userDocRef, {
+               name: name,
+               email: email,
+               role: roleToAssign || 'sales',
+               createdAt: serverTimestamp()
+            });
 
             await sendEmailVerification(userCredential.user);
 
