@@ -34,9 +34,12 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      if (!userCredential.user.emailVerified) {
+      // Allow dev user to bypass email verification
+      const isDevUser = userCredential.user.email === 'nicolas.pasche@proton.me';
+      
+      if (!userCredential.user.emailVerified && !isDevUser) {
         await signOut(auth);
-        setError("Please verify your email address before logging in. Check your inbox for a verification link.");
+        setError("Please verify your email address before logging in. Check your inbox (and spam folder!) for a verification link.");
         setLoading(false);
         return;
       }
