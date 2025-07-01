@@ -105,7 +105,7 @@ export function RecentActivities({ className }: { className?: string }) {
                         </Button>
                     </CollapsibleTrigger>
                 </CardHeader>
-                <CollapsibleContent>
+                <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                     <CardContent>
                         <Table>
                         <TableHeader>
