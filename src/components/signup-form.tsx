@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, signOut, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { UserRole } from "@/lib/auth";
@@ -50,12 +50,14 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                 displayName: name,
             });
 
+            await sendEmailVerification(userCredential.user);
+
             if (roleToAssign) {
                 const userRoleRef = doc(db, 'user_roles', email);
                 await setDoc(userRoleRef, { role: roleToAssign });
             }
 
-            // Sign out the user immediately after sign up, so they have to log in.
+            // Sign out the user immediately after sign up, so they have to log in AFTER verification.
             await signOut(auth);
             setSuccess(true);
         } catch (err: any) {
@@ -90,9 +92,7 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
         }
     };
 
-    const successMessage = roleToAssign
-        ? "Your account has been created. You can now sign in with your new credentials."
-        : "Your account has been successfully created. An administrator needs to assign you a role before you can log in.";
+    const successMessage = "Your account has been created. We've sent a verification link to your email. Please check your inbox and click the link to activate your account before you can sign in.";
 
 
     return (
@@ -108,7 +108,7 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                 <CardContent className="space-y-4">
                     <Alert variant="default" className="border-accent bg-accent/10">
                         <CheckCircle className="h-4 w-4 text-accent" />
-                        <AlertTitle className="text-accent">Account Created</AlertTitle>
+                        <AlertTitle className="text-accent">Verification Email Sent</AlertTitle>
                         <AlertDescription>
                            {successMessage}
                         </AlertDescription>

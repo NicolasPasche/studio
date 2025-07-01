@@ -2,7 +2,7 @@
 import React, {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
-import {signInWithEmailAndPassword} from 'firebase/auth';
+import {signInWithEmailAndPassword, signOut} from 'firebase/auth';
 import {auth} from '@/lib/firebase';
 import {Button} from '@/components/ui/button';
 import {
@@ -32,7 +32,15 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth);
+        setError("Please verify your email address before logging in. Check your inbox for a verification link.");
+        setLoading(false);
+        return;
+      }
+      
       router.push('/dashboard');
     } catch (err: any)
     {
@@ -62,7 +70,6 @@ export default function LoginPage() {
           message = `An unexpected error occurred: ${err.message}`;
       }
       setError(message);
-    } finally {
       setLoading(false);
     }
   };
