@@ -20,6 +20,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -127,6 +129,7 @@ export default function SettingsPage() {
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="preferences">Preferences</TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
           <Card>
@@ -218,6 +221,34 @@ export default function SettingsPage() {
                     </AlertDescription>
                   </Alert>
                 )}
+            </CardContent>
+            <CardFooter>
+              <Button>Save Preferences</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="preferences">
+          <Card>
+            <CardHeader>
+              <CardTitle>Preferences</CardTitle>
+              <CardDescription>Manage your language and region settings.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="language">Language</Label>
+                <Select defaultValue="en">
+                  <SelectTrigger id="language">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English (Default)</SelectItem>
+                    <SelectItem value="de">German</SelectItem>
+                    <SelectItem value="fr">French</SelectItem>
+                    <SelectItem value="it">Italian</SelectItem>
+                    <SelectItem value="hi">Hindi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
             <CardFooter>
               <Button>Save Preferences</Button>

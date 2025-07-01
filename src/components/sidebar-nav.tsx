@@ -8,7 +8,6 @@ import {
   Users,
   Target,
   FilePlus2,
-  Settings,
   Briefcase,
   Users2,
   Code,
@@ -18,9 +17,7 @@ import {
 import type { UserRole } from "@/lib/auth";
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuSkeleton } from "@/components/ui/sidebar";
 
-const commonLinks = [
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+const commonLinks: { href: string; label: string; icon: React.ElementType }[] = [];
 
 const navLinksByRole: Record<UserRole, { href: string; label: string; icon: React.ElementType }[]> = {
   sales: [

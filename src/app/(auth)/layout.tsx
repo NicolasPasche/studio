@@ -22,7 +22,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -82,6 +82,23 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
         <SidebarFooter className="p-2">
           <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  variant="ghost"
+                  className="w-full justify-start"
+                  tooltip={{
+                    children: "Settings",
+                    side: "right",
+                    align: "center",
+                  }}
+                >
+                  <Link href="/settings">
+                      <Settings />
+                      <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={handleLogout}

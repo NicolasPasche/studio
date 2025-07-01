@@ -5,16 +5,11 @@ export const Icons = {
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
       {...props}
     >
-      <path d="M12 2L2 7l10 5 10-5-10-5z" />
-      <path d="M2 17l10 5 10-5" />
-      <path d="M2 12l10 5 10-5" />
+      <rect width="24" height="24" fill="#0b63c5" />
+      <rect x="3" y="3" width="18" height="18" fill="#fecb00" />
+      <path fill="#000000" d="M7,7h10v2h-4v8h-2v-8H7V7z" />
     </svg>
   ),
 };
