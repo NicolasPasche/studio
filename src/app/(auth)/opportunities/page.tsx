@@ -50,6 +50,7 @@ import {
   Info,
   FileText,
   Trash2,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -73,15 +74,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';
-
-const pipelineStages: (keyof Pipeline)[] = [
-  'New Lead',
-  'Qualified',
-  'Proposal Sent',
-  'Negotiation',
-  'Won',
-  'Lost',
-];
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 function OpportunityDetailsDialog({
   opportunity,
@@ -89,12 +83,14 @@ function OpportunityDetailsDialog({
   onOpenChange,
   onStatusChange,
   onDelete,
+  onOpenClosingNotesDialog,
 }: {
   opportunity: Lead | null;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onStatusChange: (newStatus: Lead['status']) => void;
   onDelete: (opportunity: Lead) => void;
+  onOpenClosingNotesDialog: (status: 'Won' | 'Lost') => void;
 }) {
   const { user } = useAuth();
 
@@ -179,6 +175,22 @@ function OpportunityDetailsDialog({
                   )}
                 </CardContent>
               </Card>
+
+              {(opportunity.status === 'Won' || opportunity.status === 'Lost') && opportunity.closingNotes && (
+                  <div className="space-y-4 mt-6">
+                      <h4 className="font-medium flex items-center gap-2">
+                          <ClipboardCheck className="h-5 w-5 text-primary" />
+                          Closing Notes
+                      </h4>
+                      <Card className="bg-secondary/50">
+                          <CardContent className="p-4">
+                              <p className="text-sm whitespace-pre-wrap">
+                                  {opportunity.closingNotes}
+                              </p>
+                          </CardContent>
+                      </Card>
+                  </div>
+              )}
             </div>
           </div>
         </ScrollArea>
@@ -207,7 +219,7 @@ function OpportunityDetailsDialog({
               <div className="flex gap-2">
                 <Button
                   variant="destructive"
-                  onClick={() => onStatusChange('Lost')}
+                  onClick={() => onOpenClosingNotesDialog('Lost')}
                 >
                   <ThumbsDown className="mr-2 h-4 w-4" />
                   Reject Proposal
@@ -222,12 +234,12 @@ function OpportunityDetailsDialog({
               <div className="flex gap-2">
                 <Button
                   variant="destructive"
-                  onClick={() => onStatusChange('Lost')}
+                  onClick={() => onOpenClosingNotesDialog('Lost')}
                 >
                   <ThumbsDown className="mr-2 h-4 w-4" />
                   Mark as Lost
                 </Button>
-                <Button onClick={() => onStatusChange('Won')}>
+                <Button onClick={() => onOpenClosingNotesDialog('Won')}>
                   <ThumbsUp className="mr-2 h-4 w-4" />
                   Mark as Won
                 </Button>
@@ -243,6 +255,52 @@ function OpportunityDetailsDialog({
   );
 }
 
+function ClosingNotesDialog({
+    isOpen,
+    onOpenChange,
+    onSubmit,
+    details,
+    setDetails
+}: {
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
+    onSubmit: () => void;
+    details: { status: 'Won' | 'Lost', notes: string } | null;
+    setDetails: (details: { status: 'Won' | 'Lost', notes: string } | null) => void;
+}) {
+    if (!details) return null;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Closing Notes for "{details.status}" Opportunity</DialogTitle>
+                    <DialogDescription>
+                        Please provide notes for why this opportunity was marked as {details.status}. This will be saved with the lead.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="closing-notes" className="mb-2 block">Notes</Label>
+                    <Textarea
+                        id="closing-notes"
+                        value={details.notes}
+                        onChange={(e) => setDetails({ ...details, notes: e.target.value })}
+                        rows={4}
+                        placeholder="e.g., Customer chose a competitor, budget constraints, successful negotiation..."
+                    />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={onSubmit}>Confirm</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
 function FormworkPipeline() {
   const [pipeline, setPipeline] = useState<Pipeline>({
     'New Lead': [],
@@ -257,6 +315,8 @@ function FormworkPipeline() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [oppToDelete, setOppToDelete] = useState<Lead | null>(null);
+  const [isClosingNotesDialogOpen, setIsClosingNotesDialogOpen] = useState(false);
+  const [closingDetails, setClosingDetails] = useState<{ status: 'Won' | 'Lost', notes: string } | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -335,6 +395,10 @@ function FormworkPipeline() {
 
   const handleStatusChange = async (newStatus: Lead['status']) => {
     if (!selectedOpp || !user) return;
+    if (newStatus === 'Won' || newStatus === 'Lost') {
+        console.error("This status change requires notes and should go through handleOpenClosingNotesDialog.");
+        return;
+    }
 
     try {
       const leadDocRef = doc(db, 'leads', selectedOpp.id);
@@ -399,6 +463,50 @@ function FormworkPipeline() {
     }
     setIsDeleteAlertOpen(false);
   };
+
+  const handleOpenClosingNotesDialog = (status: 'Won' | 'Lost') => {
+    if (!selectedOpp) return;
+    setClosingDetails({ status, notes: selectedOpp.closingNotes || '' });
+    setIsClosingNotesDialogOpen(true);
+    setIsDetailsOpen(false); // Close details dialog
+  };
+
+  const handleConfirmCloseOpportunity = async () => {
+    if (!selectedOpp || !user || !closingDetails) return;
+
+    try {
+        const leadDocRef = doc(db, 'leads', selectedOpp.id);
+        await updateDoc(leadDocRef, { 
+            status: closingDetails.status,
+            closingNotes: closingDetails.notes 
+        });
+      
+        await addDoc(collection(db, 'activities'), {
+            type: 'Status Change',
+            description: `"${selectedOpp.company}" moved to ${closingDetails.status}.`,
+            timestamp: serverTimestamp(),
+            userId: user.email,
+            userName: user.name,
+        });
+
+        toast({
+            title: 'Status Updated',
+            description: `${selectedOpp.company} has been moved to ${closingDetails.status}.`,
+        });
+
+        setIsClosingNotesDialogOpen(false);
+        setSelectedOpp(null);
+        setClosingDetails(null);
+    } catch (error) {
+        console.error('Error updating status:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: 'Could not update the opportunity status.',
+        });
+    }
+  };
+
 
   if (loading) {
     return <OpportunitiesSkeleton />;
@@ -481,6 +589,14 @@ function FormworkPipeline() {
         onOpenChange={setIsDetailsOpen}
         onStatusChange={handleStatusChange}
         onDelete={handleDeleteClick}
+        onOpenClosingNotesDialog={handleOpenClosingNotesDialog}
+      />
+      <ClosingNotesDialog
+        isOpen={isClosingNotesDialogOpen}
+        onOpenChange={setIsClosingNotesDialogOpen}
+        onSubmit={handleConfirmCloseOpportunity}
+        details={closingDetails}
+        setDetails={setClosingDetails}
       />
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
