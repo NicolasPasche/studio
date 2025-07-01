@@ -77,6 +77,15 @@ import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
+const pipelineStages: (keyof Pipeline)[] = [
+  'New Lead',
+  'Qualified',
+  'Proposal Sent',
+  'Negotiation',
+  'Won',
+  'Lost',
+];
+
 function OpportunityDetailsDialog({
   opportunity,
   isOpen,
