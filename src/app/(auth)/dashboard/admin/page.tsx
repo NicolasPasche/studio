@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -16,6 +15,7 @@ export default function AdminDashboard() {
   const [leadCount, setLeadCount] = useState(0);
   const [newLeadsThisWeek, setNewLeadsThisWeek] = useState(0);
   const [loading, setLoading] = useState(true);
+  const projectId = 'apex-workflow-f3d61';
 
   useEffect(() => {
     const usersQuery = collection(db, 'users');
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Link href="/users" className="block">
+            <a href={`https://console.firebase.google.com/project/${projectId}/authentication/users`} target="_blank" rel="noopener noreferrer" className="block">
               <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '100ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -82,8 +82,8 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">All registered users</p>
                 </CardContent>
               </Card>
-            </Link>
-            <Link href="/opportunities" className="block">
+            </a>
+            <a href={`https://console.firebase.google.com/project/${projectId}/firestore/data/~2Fleads`} target="_blank" rel="noopener noreferrer" className="block">
               <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '200ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
@@ -94,8 +94,8 @@ export default function AdminDashboard() {
                   {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+{newLeadsThisWeek} this week</p>}
                 </CardContent>
               </Card>
-            </Link>
-            <Link href="/system-health" className="block">
+            </a>
+            <a href={`https://console.firebase.google.com/project/${projectId}/apphosting`} target="_blank" rel="noopener noreferrer" className="block">
               <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '300ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">System Health</CardTitle>
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">All systems operational</p>
                 </CardContent>
               </Card>
-            </Link>
+            </a>
             <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '400ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Alerts</CardTitle>
