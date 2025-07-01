@@ -32,6 +32,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { RecentActivities } from '@/components/recent-activities';
 
 export default function ProposalDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -109,76 +110,79 @@ export default function ProposalDashboard() {
           </CardDescription>
         </CardHeader>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Assigned Formwork Leads</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Company</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Assigned</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <Card className="xl:col-span-2">
+          <CardHeader>
+            <CardTitle>Assigned Formwork Leads</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    <div className="flex justify-center items-center">
-                      <p>Loading leads...</p>
-                    </div>
-                  </TableCell>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Assigned</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
-              ) : leads.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    No qualified formwork leads assigned.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                leads.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell className="font-medium">
-                      {lead.company}
-                    </TableCell>
-                    <TableCell>{lead.contactName}</TableCell>
-                    <TableCell>
-                      {lead.createdAt?.seconds
-                        ? formatDistanceToNow(
-                            new Date(lead.createdAt.seconds * 1000),
-                            { addSuffix: true }
-                          )
-                        : 'Recently'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          lead.status === 'New Lead'
-                            ? 'destructive'
-                            : 'default'
-                        }
-                      >
-                        {lead.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/proposal/${lead.id}`}>
-                          Create Proposal
-                        </Link>
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      <div className="flex justify-center items-center">
+                        <p>Loading leads...</p>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                ) : leads.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No qualified formwork leads assigned.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  leads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell className="font-medium">
+                        {lead.company}
+                      </TableCell>
+                      <TableCell>{lead.contactName}</TableCell>
+                      <TableCell>
+                        {lead.createdAt?.seconds
+                          ? formatDistanceToNow(
+                              new Date(lead.createdAt.seconds * 1000),
+                              { addSuffix: true }
+                            )
+                          : 'Recently'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            lead.status === 'New Lead'
+                              ? 'destructive'
+                              : 'default'
+                          }
+                        >
+                          {lead.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/proposal/${lead.id}`}>
+                            Create Proposal
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <RecentActivities />
+      </div>
     </div>
   );
 }

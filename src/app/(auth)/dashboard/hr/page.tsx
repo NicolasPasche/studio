@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Users2, Briefcase, UserPlus, FileCheck } from "lucide-react";
+import { RecentActivities } from "@/components/recent-activities";
 
 export default function HRDashboard() {
   return (
@@ -54,14 +55,7 @@ export default function HRDashboard() {
           </div>
         </CardContent>
       </Card>
-       <Card>
-        <CardHeader>
-          <CardTitle>Upcoming Anniversaries</CardTitle>
-        </CardHeader>
-        <CardContent>
-           <p className="text-muted-foreground">No upcoming anniversaries this week.</p>
-        </CardContent>
-      </Card>
+       <RecentActivities />
     </div>
   );
 }

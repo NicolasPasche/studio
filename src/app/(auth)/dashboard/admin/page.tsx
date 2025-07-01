@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Users, FileText, BarChart3, AlertTriangle, UserCog, Users2, Layers, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { RecentActivities } from "@/components/recent-activities";
 
 
 export default function AdminDashboard() {
@@ -57,37 +58,40 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-4">
-           <Button asChild variant="outline">
-              <Link href="/users">
-                <UserCog className="mr-2 h-4 w-4" />
-                Manage Users
-              </Link>
-           </Button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-4">
             <Button asChild variant="outline">
-              <Link href="/customers">
-                <Users className="mr-2 h-4 w-4" />
-                Manage Customers
-              </Link>
-           </Button>
+                <Link href="/users">
+                  <UserCog className="mr-2 h-4 w-4" />
+                  Manage Users
+                </Link>
+            </Button>
+              <Button asChild variant="outline">
+                <Link href="/customers">
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage Customers
+                </Link>
+            </Button>
+              <Button asChild variant="outline">
+                <Link href="/employees">
+                  <Users2 className="mr-2 h-4 w-4" />
+                  Manage Employees
+                </Link>
+            </Button>
             <Button asChild variant="outline">
-              <Link href="/employees">
-                <Users2 className="mr-2 h-4 w-4" />
-                Manage Employees
-              </Link>
-           </Button>
-           <Button asChild variant="outline">
-              <Link href="/opportunities">
-                <Target className="mr-2 h-4 w-4" />
-                Manage Opportunities
-              </Link>
-           </Button>
-        </CardContent>
-      </Card>
+                <Link href="/opportunities">
+                  <Target className="mr-2 h-4 w-4" />
+                  Manage Opportunities
+                </Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <RecentActivities />
+      </div>
     </div>
   );
 }
