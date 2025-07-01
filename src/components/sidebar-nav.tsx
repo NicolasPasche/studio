@@ -13,6 +13,7 @@ import {
   Code,
   UserCog,
   Layers,
+  BarChart3,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth";
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuSkeleton } from "@/components/ui/sidebar";
@@ -32,6 +33,7 @@ const navLinksByRole: Record<UserRole, { href: string; label: string; icon: Reac
     { href: "/customers", label: "Customer Mgmt", icon: Users },
     { href: "/employees", label: "Employee Mgmt", icon: Users2 },
     { href: "/opportunities", label: "Opportunities", icon: Target },
+    { href: "/system-health", label: "System Health", icon: BarChart3 },
   ],
   proposal: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
