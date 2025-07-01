@@ -78,7 +78,7 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <a href={`https://console.firebase.google.com/project/${projectId}/authentication/users`} target="_blank" rel="noopener noreferrer" className="block">
+            <Link href="/users" className="block">
               <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '100ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -89,8 +89,8 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">All registered users</p>
                 </CardContent>
               </Card>
-            </a>
-            <a href={`https://console.firebase.google.com/project/${projectId}/firestore/data/~2Fleads`} target="_blank" rel="noopener noreferrer" className="block">
+            </Link>
+            <Link href="/opportunities" className="block">
               <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '200ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
@@ -101,8 +101,8 @@ export default function AdminDashboard() {
                   {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+{newLeadsThisWeek} this week</p>}
                 </CardContent>
               </Card>
-            </a>
-            <a href={`https://console.firebase.google.com/project/${projectId}/app-hosting`} target="_blank" rel="noopener noreferrer" className="block">
+            </Link>
+            <Link href="/system-health" className="block">
               <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '300ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">System Health</CardTitle>
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">All systems operational</p>
                 </CardContent>
               </Card>
-            </a>
+            </Link>
             <a href={`https://console.cloud.google.com/monitoring/alerting?project=${projectId}`} target="_blank" rel="noopener noreferrer" className="block">
               <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '400ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
