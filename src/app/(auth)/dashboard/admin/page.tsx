@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -8,6 +9,7 @@ import { Users, FileText, BarChart3, AlertTriangle } from "lucide-react";
 import { RecentActivities } from "@/components/recent-activities";
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Lead } from '@/lib/types';
+import Link from 'next/link';
 
 
 export default function AdminDashboard() {
@@ -95,7 +97,7 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </a>
-            <a href={`https://console.firebase.google.com/project/${projectId}/apphosting`} target="_blank" rel="noopener noreferrer" className="block">
+            <Link href="/system-health" className="block">
               <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '300ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">System Health</CardTitle>
@@ -106,7 +108,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">All systems operational</p>
                 </CardContent>
               </Card>
-            </a>
+            </Link>
             <Card className="opacity-0 animate-fade-up transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_8px_30px_hsl(var(--accent-glow))]" style={{ animationDelay: '400ms' }}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Alerts</CardTitle>
