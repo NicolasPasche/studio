@@ -16,15 +16,17 @@ export default function AdminDashboard() {
   const [userCount, setUserCount] = useState(0);
   const [leadCount, setLeadCount] = useState(0);
   const [newLeadsThisWeek, setNewLeadsThisWeek] = useState(0);
+  const [alertCount, setAlertCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const projectId = 'apex-workflow-f3d61';
 
   useEffect(() => {
     const usersQuery = collection(db, 'users');
     const leadsQuery = collection(db, 'leads');
+    const alertsQuery = collection(db, 'alerts');
 
     let loadedSources = 0;
-    const totalSources = 2;
+    const totalSources = 3;
     const checkLoadingDone = () => {
         loadedSources++;
         if (loadedSources === totalSources) {
@@ -58,9 +60,19 @@ export default function AdminDashboard() {
       checkLoadingDone();
     });
 
+    const unsubscribeAlerts = onSnapshot(alertsQuery, (snapshot) => {
+      setAlertCount(snapshot.size);
+      checkLoadingDone();
+    }, (error) => {
+      console.error("Error fetching alerts count:", error);
+      setAlertCount(0);
+      checkLoadingDone();
+    });
+
     return () => {
       unsubscribeUsers();
       unsubscribeLeads();
+      unsubscribeAlerts();
     };
   }, []);
 
@@ -116,7 +128,7 @@ export default function AdminDashboard() {
                   <AlertTriangle className="h-4 w-4 text-destructive" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">3</div>
+                  {loading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{alertCount}</div>}
                   <p className="text-xs text-muted-foreground">Requires immediate attention</p>
                 </CardContent>
               </Card>
