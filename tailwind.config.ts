@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['"Roboto Slab"', 'serif'],
+        headline: ['"Roboto Slab"', 'serif'],
         code: ['monospace'],
       },
       colors: {
