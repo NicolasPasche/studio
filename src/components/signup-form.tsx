@@ -55,7 +55,7 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                 displayName: name,
             });
 
-            // 3. Create their user record in the database
+            // 3. Create their user record in the database with the assigned role
             const userDocRef = doc(db, "users", user.uid);
             await setDoc(userDocRef, {
                name: name,
