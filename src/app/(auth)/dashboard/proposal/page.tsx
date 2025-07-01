@@ -149,9 +149,9 @@ export default function ProposalDashboard() {
                       </TableCell>
                       <TableCell>{lead.contactName}</TableCell>
                       <TableCell>
-                        {lead.createdAt?.seconds
+                        {lead.createdAt
                           ? formatDistanceToNow(
-                              new Date(lead.createdAt.seconds * 1000),
+                              lead.createdAt.toDate(),
                               { addSuffix: true }
                             )
                           : 'Recently'}

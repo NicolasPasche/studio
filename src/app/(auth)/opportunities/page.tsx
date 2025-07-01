@@ -76,6 +76,7 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 const pipelineStages: (keyof Pipeline)[] = [
   'New Lead',
@@ -92,14 +93,14 @@ function OpportunityDetailsDialog({
   onOpenChange,
   onStatusChange,
   onDelete,
-  onOpenClosingNotesDialog,
+  onOpenClosingDetailsDialog,
 }: {
   opportunity: Lead | null;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onStatusChange: (newStatus: Lead['status']) => void;
   onDelete: (opportunity: Lead) => void;
-  onOpenClosingNotesDialog: (status: 'Won' | 'Lost') => void;
+  onOpenClosingDetailsDialog: (status: 'Won' | 'Lost') => void;
 }) {
   const { user } = useAuth();
 
@@ -185,20 +186,31 @@ function OpportunityDetailsDialog({
                 </CardContent>
               </Card>
 
-              {(opportunity.status === 'Won' || opportunity.status === 'Lost') && opportunity.closingNotes && (
-                  <div className="space-y-4 mt-6">
-                      <h4 className="font-medium flex items-center gap-2">
-                          <ClipboardCheck className="h-5 w-5 text-primary" />
-                          Closing Notes
-                      </h4>
-                      <Card className="bg-secondary/50">
-                          <CardContent className="p-4">
-                              <p className="text-sm whitespace-pre-wrap">
+              {(opportunity.status === 'Won' || opportunity.status === 'Lost') && (
+                <div className="space-y-4 mt-6">
+                  <h4 className="font-medium flex items-center gap-2">
+                      <ClipboardCheck className="h-5 w-5 text-primary" />
+                      Closing Details
+                  </h4>
+                  <Card className="bg-secondary/50">
+                      <CardContent className="p-4 space-y-2">
+                          {opportunity.value && (
+                            <div>
+                               <p className="text-sm font-medium">Final Amount</p>
+                               <p className="text-sm text-muted-foreground">${opportunity.value.toLocaleString()}</p>
+                            </div>
+                          )}
+                          {opportunity.closingNotes && (
+                            <div>
+                               <p className="text-sm font-medium">Notes</p>
+                               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                                   {opportunity.closingNotes}
-                              </p>
-                          </CardContent>
-                      </Card>
-                  </div>
+                               </p>
+                            </div>
+                          )}
+                      </CardContent>
+                  </Card>
+                </div>
               )}
             </div>
           </div>
@@ -228,7 +240,7 @@ function OpportunityDetailsDialog({
               <div className="flex gap-2">
                 <Button
                   variant="destructive"
-                  onClick={() => onOpenClosingNotesDialog('Lost')}
+                  onClick={() => onOpenClosingDetailsDialog('Lost')}
                 >
                   <ThumbsDown className="mr-2 h-4 w-4" />
                   Reject Proposal
@@ -243,12 +255,12 @@ function OpportunityDetailsDialog({
               <div className="flex gap-2">
                 <Button
                   variant="destructive"
-                  onClick={() => onOpenClosingNotesDialog('Lost')}
+                  onClick={() => onOpenClosingDetailsDialog('Lost')}
                 >
                   <ThumbsDown className="mr-2 h-4 w-4" />
                   Mark as Lost
                 </Button>
-                <Button onClick={() => onOpenClosingNotesDialog('Won')}>
+                <Button onClick={() => onOpenClosingDetailsDialog('Won')}>
                   <ThumbsUp className="mr-2 h-4 w-4" />
                   Mark as Won
                 </Button>
@@ -264,7 +276,7 @@ function OpportunityDetailsDialog({
   );
 }
 
-function ClosingNotesDialog({
+function ClosingDetailsDialog({
     isOpen,
     onOpenChange,
     onSubmit,
@@ -274,8 +286,8 @@ function ClosingNotesDialog({
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     onSubmit: () => void;
-    details: { status: 'Won' | 'Lost', notes: string } | null;
-    setDetails: (details: { status: 'Won' | 'Lost', notes: string } | null) => void;
+    details: { status: 'Won' | 'Lost', notes: string, value: string } | null;
+    setDetails: (details: { status: 'Won' | 'Lost', notes: string, value: string } | null) => void;
 }) {
     if (!details) return null;
 
@@ -283,20 +295,35 @@ function ClosingNotesDialog({
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Add Closing Notes for "{details.status}" Opportunity</DialogTitle>
+                    <DialogTitle>Add Closing Details for "{details.status}" Opportunity</DialogTitle>
                     <DialogDescription>
-                        Please provide notes for why this opportunity was marked as {details.status}. This will be saved with the lead.
+                        Please provide the final details for why this opportunity was marked as {details.status}.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                    <Label htmlFor="closing-notes" className="mb-2 block">Notes</Label>
-                    <Textarea
-                        id="closing-notes"
-                        value={details.notes}
-                        onChange={(e) => setDetails({ ...details, notes: e.target.value })}
-                        rows={4}
-                        placeholder="e.g., Customer chose a competitor, budget constraints, successful negotiation..."
-                    />
+                <div className="py-4 space-y-4">
+                    <div>
+                      <Label htmlFor="lead-value" className="mb-2 block">
+                          {details.status === 'Won' ? 'Amount Gained ($)' : 'Amount Lost ($)'}
+                      </Label>
+                      <Input
+                          id="lead-value"
+                          type="number"
+                          value={details.value}
+                          onChange={(e) => setDetails({ ...details, value: e.target.value })}
+                          placeholder="e.g., 50000"
+                          required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="closing-notes" className="mb-2 block">Notes</Label>
+                      <Textarea
+                          id="closing-notes"
+                          value={details.notes}
+                          onChange={(e) => setDetails({ ...details, notes: e.target.value })}
+                          rows={4}
+                          placeholder="e.g., Customer chose a competitor, budget constraints, successful negotiation..."
+                      />
+                    </div>
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
@@ -324,8 +351,8 @@ function FormworkPipeline() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [oppToDelete, setOppToDelete] = useState<Lead | null>(null);
-  const [isClosingNotesDialogOpen, setIsClosingNotesDialogOpen] = useState(false);
-  const [closingDetails, setClosingDetails] = useState<{ status: 'Won' | 'Lost', notes: string } | null>(null);
+  const [isClosingDetailsDialogOpen, setIsClosingDetailsDialogOpen] = useState(false);
+  const [closingDetails, setClosingDetails] = useState<{ status: 'Won' | 'Lost', notes: string, value: string } | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -405,7 +432,7 @@ function FormworkPipeline() {
   const handleStatusChange = async (newStatus: Lead['status']) => {
     if (!selectedOpp || !user) return;
     if (newStatus === 'Won' || newStatus === 'Lost') {
-        console.error("This status change requires notes and should go through handleOpenClosingNotesDialog.");
+        console.error("This status change requires notes and should go through handleOpenClosingDetailsDialog.");
         return;
     }
 
@@ -473,21 +500,33 @@ function FormworkPipeline() {
     setIsDeleteAlertOpen(false);
   };
 
-  const handleOpenClosingNotesDialog = (status: 'Won' | 'Lost') => {
+  const handleOpenClosingDetailsDialog = (status: 'Won' | 'Lost') => {
     if (!selectedOpp) return;
-    setClosingDetails({ status, notes: selectedOpp.closingNotes || '' });
-    setIsClosingNotesDialogOpen(true);
+    setClosingDetails({ 
+      status, 
+      notes: selectedOpp.closingNotes || '',
+      value: selectedOpp.value?.toString() || ''
+    });
+    setIsClosingDetailsDialogOpen(true);
     setIsDetailsOpen(false); // Close details dialog
   };
 
   const handleConfirmCloseOpportunity = async () => {
     if (!selectedOpp || !user || !closingDetails) return;
+    
+    const finalValue = parseFloat(closingDetails.value);
+    if (isNaN(finalValue)) {
+      toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Please enter a valid number for the amount.' });
+      return;
+    }
 
     try {
         const leadDocRef = doc(db, 'leads', selectedOpp.id);
         await updateDoc(leadDocRef, { 
             status: closingDetails.status,
-            closingNotes: closingDetails.notes 
+            closingNotes: closingDetails.notes,
+            value: finalValue,
+            closedAt: serverTimestamp(),
         });
       
         await addDoc(collection(db, 'activities'), {
@@ -503,7 +542,7 @@ function FormworkPipeline() {
             description: `${selectedOpp.company} has been moved to ${closingDetails.status}.`,
         });
 
-        setIsClosingNotesDialogOpen(false);
+        setIsClosingDetailsDialogOpen(false);
         setSelectedOpp(null);
         setClosingDetails(null);
     } catch (error) {
@@ -598,11 +637,11 @@ function FormworkPipeline() {
         onOpenChange={setIsDetailsOpen}
         onStatusChange={handleStatusChange}
         onDelete={handleDeleteClick}
-        onOpenClosingNotesDialog={handleOpenClosingNotesDialog}
+        onOpenClosingDetailsDialog={handleOpenClosingDetailsDialog}
       />
-      <ClosingNotesDialog
-        isOpen={isClosingNotesDialogOpen}
-        onOpenChange={setIsClosingNotesDialogOpen}
+      <ClosingDetailsDialog
+        isOpen={isClosingDetailsDialogOpen}
+        onOpenChange={setIsClosingDetailsDialogOpen}
         onSubmit={handleConfirmCloseOpportunity}
         details={closingDetails}
         setDetails={setClosingDetails}
@@ -775,9 +814,9 @@ function ScaffoldingLeadsTable() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {lead.createdAt?.seconds
+                      {lead.createdAt
                         ? format(
-                            new Date(lead.createdAt.seconds * 1000),
+                            lead.createdAt.toDate(),
                             'PPP'
                           )
                         : 'N/A'}

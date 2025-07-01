@@ -16,12 +16,11 @@ export interface Lead {
     | 'Negotiation'
     | 'Won'
     | 'Lost';
-  createdAt: {
-    seconds: number;
-    nanoseconds: number;
-  };
+  createdAt: Timestamp;
   proposalContent?: string;
   closingNotes?: string;
+  value?: number;
+  closedAt?: Timestamp;
 }
 
 export type Pipeline = {
