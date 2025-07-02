@@ -1,9 +1,18 @@
+
 "use client"
 import Link from 'next/link';
 import { SignUpForm } from '@/components/signup-form';
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Code, Shield, Briefcase, UserCog, Users } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Code, Shield, UserCog, Users, ChevronUp } from 'lucide-react';
 
 
 export default function SignUpPage() {
@@ -14,7 +23,7 @@ export default function SignUpPage() {
         description="Enter your details to sign up for a sales role"
         roleToAssign="sales"
       />
-      <div className="fixed bottom-4 right-4 flex gap-2">
+      <div className="fixed bottom-4 right-4 flex items-center gap-2">
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
@@ -42,32 +51,39 @@ export default function SignUpPage() {
                     <p>HR Sign Up</p>
                 </TooltipContent>
             </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button asChild variant="outline" size="icon" className="rounded-full">
+
+            <DropdownMenu>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" className="rounded-full">
+                                <ChevronUp className="h-4 w-4" />
+                                <span className="sr-only">Advanced sign-up options</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Advanced Sign Up</p>
+                    </TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" side="top">
+                    <DropdownMenuLabel>Advanced Roles</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
                         <Link href="/signup/admin">
                             <Shield />
-                            <span className="sr-only">Admin Sign Up</span>
+                            <span>Admin</span>
                         </Link>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Admin Sign Up</p>
-                </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                     <Button asChild variant="outline" size="icon" className="rounded-full">
-                        <Link href="/signup/dev">
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                         <Link href="/signup/dev">
                             <Code />
-                            <span className="sr-only">Developer Sign Up</span>
+                            <span>Developer</span>
                         </Link>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Developer Sign Up</p>
-                </TooltipContent>
-            </Tooltip>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
         </TooltipProvider>
       </div>
     </div>
