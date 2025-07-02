@@ -46,12 +46,12 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
         setSuccess(false);
 
         try {
-            // If signing up for a specific role (dev/admin), call the flow to pre-create the role document.
+            // If signing up for a specific role (dev/admin), call the server action to pre-create the role document.
             // This allows AuthProvider to assign the correct role on first login.
             if (roleToAssign) {
                 const result = await preRegisterUserRole({ email, role: roleToAssign });
                 if (!result.success) {
-                    throw new Error("Failed to set user role. Please try again.");
+                    throw new Error(result.error || "Failed to set user role. Please try again.");
                 }
             }
 
