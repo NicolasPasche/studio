@@ -21,6 +21,7 @@ import { Icons } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 import { UserRole } from '@/lib/auth';
+import { adminEmails } from '@/lib/admin-accounts';
 
 interface SignUpFormProps {
     title: string;
@@ -50,20 +51,19 @@ export function SignUpForm({ title, description, showLoginLink = true, roleToAss
             return;
         }
 
+        if (roleToAssign === 'admin' && !adminEmails.includes(email)) {
+            setError("This email address is not authorized for admin sign-up.");
+            setLoading(false);
+            return;
+        }
+
         try {
             // 1. Create the user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             // 2. Set their display name with a role suffix for later processing.
-            let displayNameWithRole: string;
-            if (roleToAssign === 'dev') {
-                // For dev sign-up, the user is expected to enter the suffix manually.
-                displayNameWithRole = name;
-            } else {
-                // For other roles, we append the suffix automatically.
-                displayNameWithRole = `${name}__${roleToAssign}`;
-            }
+            const displayNameWithRole = `${name}__${roleToAssign}`;
             await updateProfile(user, { displayName: displayNameWithRole });
             
             // 3. Send the verification email.

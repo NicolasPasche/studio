@@ -70,6 +70,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { UserPlus, Shield, Briefcase, UserCog, Users, Code, MoreHorizontal, Trash2, Lock, Unlock } from 'lucide-react';
+import { preRegisterUserRole } from '@/ai/flows/user-role-flow';
 
 type DisplayUser = {
   id: string; // Firebase Auth UID
@@ -102,8 +103,10 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
     }
 
     try {
-      const userRoleRef = doc(db, 'user_roles', email);
-      await setDoc(userRoleRef, { role });
+      const result = await preRegisterUserRole({ email, role });
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to send invite.');
+      }
 
       await addDoc(collection(db, 'activities'), {
         type: 'User Invited',
@@ -435,7 +438,7 @@ export default function UserManagementPage() {
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
                                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                      {currentUser?.role === 'admin' && (
+                                      {realUser?.role === 'admin' && (
                                         <DropdownMenuItem
                                             onClick={() => handleRestrictClick(user)}
                                             disabled={user.role === 'dev' || isCurrentUser}
@@ -447,7 +450,7 @@ export default function UserManagementPage() {
                                             )}
                                         </DropdownMenuItem>
                                       )}
-                                      {currentUser?.role === 'dev' && (
+                                      {realUser?.role === 'dev' && (
                                           <DropdownMenuItem
                                               className="text-destructive"
                                               onClick={() => handleDeleteClick(user)}

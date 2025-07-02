@@ -55,15 +55,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const userEmail = firebaseUser.email!;
                 const displayName = firebaseUser.displayName || userEmail.split('@')[0];
                 
-                // Parse the role from the display name suffix
                 const nameParts = displayName.split('__');
                 const cleanedName = nameParts[0];
-                const roleFromSignUp = (nameParts[1] || 'sales') as UserRole;
+                const roleFromDisplayName = (nameParts.length > 1 ? nameParts[1] : 'sales') as UserRole;
+                
+                let finalRole: UserRole;
+
+                if (roleFromDisplayName !== 'admin' && roleFromDisplayName !== 'dev') {
+                    const roleDocRef = doc(db, 'user_roles', userEmail);
+                    const roleDoc = await getDoc(roleDocRef);
+
+                    if (!roleDoc.exists()) {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Access Denied',
+                            description: 'You must be invited by an administrator to use this application.',
+                            duration: 8000
+                        });
+                        await firebaseUser.delete();
+                        await signOut(auth);
+                        setRealUser(null);
+                        setLoading(false);
+                        return;
+                    }
+                    finalRole = roleDoc.data().role as UserRole;
+                } else {
+                    finalRole = roleFromDisplayName;
+                }
                 
                 const newUserRecord = {
                     name: cleanedName,
                     email: userEmail,
-                    role: roleFromSignUp,
+                    role: finalRole,
                     createdAt: serverTimestamp(),
                     emailVerified: true,
                     disabled: false,
