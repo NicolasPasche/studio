@@ -18,7 +18,7 @@ export type PreRegisterRoleInput = z.infer<typeof PreRegisterRoleInputSchema>;
 
 export async function preRegisterUserRole(input: PreRegisterRoleInput): Promise<{success: boolean, error?: string}> {
     try {
-      const validatedInput = PreRegisterRole_InputSchema.parse(input);
+      const validatedInput = PreRegisterRoleInputSchema.parse(input);
       const roleDocRef = doc(db, 'user_roles', validatedInput.email);
       await setDoc(roleDocRef, { role: validatedInput.role });
       return { success: true };

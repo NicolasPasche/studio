@@ -8,7 +8,6 @@ import { doc, getDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firest
 import { auth, db } from "@/lib/firebase";
 import { User, UserRole, users as mockUsers } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { developerEmails } from "@/lib/dev-accounts";
 
 export interface AuthContextType {
   user: User | null;
@@ -57,18 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const userEmail = firebaseUser.email!;
                 const userName = firebaseUser.displayName || userEmail.split('@')[0];
                 
-                let determinedRole: UserRole = 'sales'; // Default role
+                // Determine role based on pre-registration. Default to 'sales'.
+                const roleDocRef = doc(db, "user_roles", userEmail);
+                const roleDocSnap = await getDoc(roleDocRef);
                 
-                // Correctly determine the role, prioritizing dev accounts
-                if (developerEmails.includes(userEmail)) {
-                    determinedRole = 'dev';
-                } else {
-                    const roleDocRef = doc(db, "user_roles", userEmail);
-                    const roleDocSnap = await getDoc(roleDocRef);
-                    if (roleDocSnap.exists()) {
-                        determinedRole = roleDocSnap.data().role as UserRole;
-                    }
-                }
+                const determinedRole: UserRole = roleDocSnap.exists()
+                    ? roleDocSnap.data().role as UserRole
+                    : 'sales';
                 
                 const newUserRecord = {
                     name: userName,
