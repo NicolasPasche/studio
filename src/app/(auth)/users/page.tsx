@@ -69,8 +69,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { UserPlus, Shield, Briefcase, UserCog, Users, Code, MoreHorizontal, Trash2, Lock, Unlock } from 'lucide-react';
-import { preRegisterUserRole } from '@/ai/flows/user-role-flow';
+import { UserPlus, Shield, Briefcase, UserCog, Users, Code, MoreHorizontal, Trash2, Lock, Unlock, Copy } from 'lucide-react';
 
 type DisplayUser = {
   id: string; // Firebase Auth UID
@@ -80,60 +79,28 @@ type DisplayUser = {
   disabled?: boolean;
 };
 
-function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('sales');
+function InviteUserDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
-  const { realUser } = useAuth();
 
-  const handleInvite = async () => {
-    if (!email || !role) {
-      toast({
-        variant: 'destructive',
-        title: 'Validation Error',
-        description: 'Please enter an email and select a role.',
-      });
-      return;
-    }
-
-    if (!realUser) {
-        toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be logged in.' });
-        return;
-    }
-
-    try {
-      const result = await preRegisterUserRole({ email, role });
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to send invite.');
-      }
-
-      await addDoc(collection(db, 'activities'), {
-        type: 'User Invited',
-        description: `${email} was invited as a ${roleDisplayNames[role]}.`,
-        timestamp: serverTimestamp(),
-        userId: realUser.email,
-        userName: realUser.name,
-      });
-      
-      toast({
-        title: 'User Invited',
-        description: `${email} has been invited as a ${roleDisplayNames[role]}. They can now sign up.`,
-      });
-
-      setIsOpen(false);
-      setEmail('');
-      setRole('sales');
-      onUserInvited();
-    } catch (error) {
-      console.error('Error inviting user:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Invitation Failed',
-        description: 'Could not set the user role in the database.',
-      });
-    }
+  const handleCopy = (link: string) => {
+    navigator.clipboard.writeText(link);
+    toast({ title: "Link Copied!", description: "The sign-up link has been copied to your clipboard." });
   };
+  
+  const getBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return '';
+  };
+  const baseUrl = getBaseUrl();
+
+  const inviteLinks = [
+    { role: 'sales', path: '/' },
+    { role: 'proposal', path: '/signup/proposal' },
+    { role: 'hr', path: '/signup/hr' },
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -143,49 +110,33 @@ function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
           Invite User
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Invite New User</DialogTitle>
+          <DialogTitle>Generate Invitation Link</DialogTitle>
           <DialogDescription>
-            Enter the email and assign a role. The user can then sign up to access the app.
+            Copy the appropriate sign-up link and send it to the new user.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="email" className="text-right">
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="col-span-3"
-              placeholder="new.user@example.com"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="role" className="text-right">
-              Role
-            </Label>
-            <Select onValueChange={(value) => setRole(value as UserRole)} defaultValue={role}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="proposal">Proposal Engineer</SelectItem>
-                <SelectItem value="hr">HR</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-4 py-4">
+          {inviteLinks.map(({ role, path }) => {
+            const fullLink = `${baseUrl}${path}`;
+            return (
+              <div key={role} className="space-y-2">
+                <Label htmlFor={`link-${role}`}>{roleDisplayNames[role as UserRole]} Sign-up Link</Label>
+                <div className="flex items-center space-x-2">
+                  <Input id={`link-${role}`} value={fullLink} readOnly />
+                  <Button type="button" size="icon" onClick={() => handleCopy(fullLink)}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )
+          })}
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="secondary">Cancel</Button>
+            <Button type="button" variant="secondary">Close</Button>
           </DialogClose>
-          <Button onClick={handleInvite}>Send Invite</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -367,7 +318,7 @@ export default function UserManagementPage() {
                 Invite, view, and manage user roles across the application.
               </CardDescription>
             </div>
-            {currentUser?.role === 'admin' && <InviteUserDialog onUserInvited={fetchUsers} />}
+            {currentUser?.role === 'admin' && <InviteUserDialog />}
           </div>
         </CardHeader>
         <CardContent>
