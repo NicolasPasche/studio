@@ -37,8 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Security Check: If not a dev and email is not verified, deny access.
         if (!isDev && !firebaseUser.emailVerified) {
-            // No toast needed here, login page will handle the message.
-            // This just prevents a session from being established.
+            toast({
+                variant: "destructive",
+                title: "Email Verification Required",
+                description: "Please check your inbox and verify your email address before logging in.",
+            });
             await signOut(auth);
             setRealUser(null);
             setLoading(false);

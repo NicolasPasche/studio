@@ -3,7 +3,6 @@
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AuthProvider } from "@/components/auth-provider";
 import { useAuth } from "@/hooks/use-auth";
 import { Header } from "@/components/header";
 import { SidebarNav } from "@/components/sidebar-nav";
@@ -143,8 +142,6 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider>
       <ProtectedLayout>{children}</ProtectedLayout>
-    </AuthProvider>
   );
 }

@@ -1,11 +1,10 @@
 
 'use client';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
-import {signInWithEmailAndPassword, signOut} from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import {auth, db} from '@/lib/firebase';
+import {signInWithEmailAndPassword} from 'firebase/auth';
+import {auth} from '@/lib/firebase';
 import {Button} from '@/components/ui/button';
 import {
   Card,
@@ -20,14 +19,21 @@ import {Label} from '@/components/ui/label';
 import {Icons} from '@/components/icons';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {AlertTriangle, Loader2} from 'lucide-react';
-import { developerEmails } from '@/lib/dev-accounts';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      router.replace('/dashboard');
+    }
+  }, [user, router]);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -35,27 +41,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // 1. Sign in the user
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // 2. IMPORTANT: Reload user data to get the latest emailVerified state
-      await user.reload();
-
-      // 3. Check if user is a developer (for bypass)
-      const isDevUser = developerEmails.includes(user.email || '');
-      
-      // 4. Check for verification. Allow access if verified OR if they are a dev user.
-      if (user.emailVerified || isDevUser) {
-        // Login successful, proceed to dashboard
-        router.push('/dashboard');
-      } else {
-        // Not verified and not a dev, so sign them out and show an error.
-        await signOut(auth); 
-        setError("Please verify your email address before logging in. Check your inbox (and spam folder!) for a verification link.");
-        setLoading(false);
-      }
-
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (err: any) {
       console.error('Firebase Auth Error:', err);
       let message;
