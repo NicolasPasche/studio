@@ -4,7 +4,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser, signOut } from "firebase/auth";
-import { collection, query, where, getDocs, limit, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { User, UserRole, users as mockUsers } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await firebaseUser.reload(); // Get the latest user data
         const isDev = developerEmails.includes(firebaseUser.email);
 
-        // Security Check: If not a dev and email is not verified, deny access.
+        // This check is now the single source of truth for allowing access.
         if (!isDev && !firebaseUser.emailVerified) {
             toast({
                 variant: "destructive",
@@ -50,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return; 
         }
 
-        // If we get here, user is verified or is a developer. Proceed.
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("email", "==", firebaseUser.email), limit(1));
         const querySnapshot = await getDocs(q);
@@ -64,17 +63,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 role: 'dev',
                 avatar: mockUsers.dev.avatar,
                 initials: name.substring(0, 2).toUpperCase(),
+                emailVerified: true,
             });
         } else if (userDocSnap) {
           const dbData = userDocSnap.data();
-          const userRole = dbData.role as UserRole;
 
+          // Sync email verification status from Auth to Firestore
+          if (firebaseUser.emailVerified && !dbData.emailVerified) {
+            const userDocRef = doc(db, 'users', userDocSnap.id);
+            await updateDoc(userDocRef, { emailVerified: true });
+            dbData.emailVerified = true; // Update local data to avoid stale state
+          }
+          
+          const userRole = dbData.role as UserRole;
           const userDataFromDb: User = {
             name: dbData.name || firebaseUser.displayName || firebaseUser.email,
             email: firebaseUser.email,
             role: userRole,
             avatar: mockUsers[userRole]?.avatar || "",
             initials: (dbData.name || firebaseUser.displayName || firebaseUser.email).substring(0, 2).toUpperCase(),
+            emailVerified: dbData.emailVerified || false,
           };
           setRealUser(userDataFromDb);
         } else {

@@ -65,7 +65,8 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                name: name,
                email: email,
                role: finalRole,
-               createdAt: serverTimestamp()
+               createdAt: serverTimestamp(),
+               emailVerified: user.emailVerified, // Will be false
             });
 
             // 4. Send the verification email.

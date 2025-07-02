@@ -1,3 +1,4 @@
+
 export type UserRole = "sales" | "admin" | "proposal" | "hr" | "dev";
 
 export interface User {
@@ -6,6 +7,7 @@ export interface User {
   role: UserRole;
   avatar: string;
   initials: string;
+  emailVerified: boolean;
 }
 
 export const users: Record<UserRole, User> = {
@@ -15,6 +17,7 @@ export const users: Record<UserRole, User> = {
     role: "sales",
     avatar: "/avatars/01.png",
     initials: "AJ",
+    emailVerified: true,
   },
   admin: {
     name: "Maria Garcia",
@@ -22,6 +25,7 @@ export const users: Record<UserRole, User> = {
     role: "admin",
     avatar: "/avatars/02.png",
     initials: "MG",
+    emailVerified: true,
   },
   proposal: {
     name: "David Chen",
@@ -29,6 +33,7 @@ export const users: Record<UserRole, User> = {
     role: "proposal",
     avatar: "/avatars/03.png",
     initials: "DC",
+    emailVerified: true,
   },
   hr: {
     name: "Sarah Lee",
@@ -36,6 +41,7 @@ export const users: Record<UserRole, User> = {
     role: "hr",
     avatar: "/avatars/04.png",
     initials: "SL",
+    emailVerified: true,
   },
   dev: {
     name: "Dev User",
@@ -43,6 +49,7 @@ export const users: Record<UserRole, User> = {
     role: "dev",
     avatar: "/avatars/05.png",
     initials: "DV",
+    emailVerified: true,
   }
 };
 
