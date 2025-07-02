@@ -27,6 +27,7 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage
 import { doc, updateDoc } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { Textarea } from "@/components/ui/textarea";
+import { UserProfileDialog } from "@/components/user-profile-dialog";
 
 
 export default function SettingsPage() {
@@ -36,6 +37,7 @@ export default function SettingsPage() {
   const [name, setName] = useState(user?.name || '');
   const [readme, setReadme] = useState(user?.readme || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [isPushEnabled, setIsPushEnabled] = useState(false);
   const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
@@ -210,6 +212,7 @@ export default function SettingsPage() {
   }
 
   return (
+    <>
       <Tabs defaultValue="profile" className="w-full">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -225,10 +228,13 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback>{user.initials}</AvatarFallback>
-                </Avatar>
+                 <button onClick={() => setIsProfileOpen(true)} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    <Avatar className="h-20 w-20">
+                        <AvatarImage src={user.avatar} />
+                        <AvatarFallback>{user.initials}</AvatarFallback>
+                    </Avatar>
+                     <span className="sr-only">View my profile</span>
+                </button>
                 <input 
                   type="file"
                   ref={fileInputRef}
@@ -366,5 +372,11 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      <UserProfileDialog
+        user={user}
+        isOpen={isProfileOpen}
+        onOpenChange={setIsProfileOpen}
+      />
+    </>
   );
 }

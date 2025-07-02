@@ -72,7 +72,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { UserPlus, Shield, Briefcase, UserCog, Users, Code, MoreHorizontal, Trash2, Lock, Unlock, Copy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import { UserProfileDialog } from '@/components/user-profile-dialog';
 
 type DisplayUser = {
   id: string; // Firebase Auth UID
@@ -147,36 +147,6 @@ function InviteUserDialog() {
       </DialogContent>
     </Dialog>
   );
-}
-
-function UserProfileDialog({ user, isOpen, onOpenChange }: { user: DisplayUser | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
-    if (!user) return null;
-
-    return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader className="items-center text-center">
-                    <Avatar className="h-20 w-20 mb-4">
-                        <AvatarImage src={user.avatar} />
-                        <AvatarFallback>{user.initials}</AvatarFallback>
-                    </Avatar>
-                    <DialogTitle className="text-2xl">{user.name}</DialogTitle>
-                    <DialogDescription>{roleDisplayNames[user.role]}</DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                    <Separator />
-                    <div className="prose prose-sm dark:prose-invert mx-auto mt-4 text-center text-muted-foreground max-w-none">
-                       <p className="whitespace-pre-wrap">{user.readme || "This user hasn't written a readme yet."}</p>
-                    </div>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="outline">Close</Button>
-                    </DialogClose>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
 }
 
 export default function UserManagementPage() {
@@ -402,13 +372,16 @@ export default function UserManagementPage() {
                     return (
                       <TableRow key={user.id}>
                           <TableCell className="font-medium">
-                            <button className="flex items-center gap-2 text-left hover:underline" onClick={() => handleViewProfile(user)}>
-                               <Avatar className="h-8 w-8">
-                                  <AvatarImage src={user.avatar} />
-                                  <AvatarFallback>{user.initials}</AvatarFallback>
-                              </Avatar>
-                              <span>{user.name}</span>
-                            </button>
+                             <div className="flex items-center gap-2">
+                                <button onClick={() => handleViewProfile(user)} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={user.avatar} />
+                                        <AvatarFallback>{user.initials}</AvatarFallback>
+                                    </Avatar>
+                                     <span className="sr-only">View profile for {user.name}</span>
+                                </button>
+                                <span>{user.name}</span>
+                              </div>
                           </TableCell>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>
