@@ -45,7 +45,7 @@ export function SignUpForm({ title, description, showLoginLink = true, roleToAss
         setSuccess(false);
 
         if (roleToAssign === 'dev' && !name.endsWith('__dev')) {
-            setError("To sign up as a developer, your first name must end with '__dev'.");
+            setError("No authorization.");
             setLoading(false);
             return;
         }
