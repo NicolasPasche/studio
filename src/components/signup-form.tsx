@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateProfile } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { UserRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,13 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
         setSuccess(false);
 
         try {
+            // If signing up for a specific role (dev/admin), pre-create the role document.
+            // This allows AuthProvider to assign the correct role on the user's first login.
+            if (roleToAssign) {
+                const roleDocRef = doc(db, "user_roles", email);
+                await setDoc(roleDocRef, { role: roleToAssign });
+            }
+            
             // 1. Create the user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
