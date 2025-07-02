@@ -5,8 +5,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateProfile } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import type { UserRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { preRegisterUserRole } from '@/ai/flows/user-role-flow';
 
 interface SignUpFormProps {
     title: string;
@@ -46,23 +46,25 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
         setSuccess(false);
 
         try {
-            // If signing up for a specific role (dev/admin), pre-create the role document.
-            // This allows AuthProvider to assign the correct role on the user's first login.
+            // If signing up for a specific role (dev/admin), call the flow to pre-create the role document.
+            // This allows AuthProvider to assign the correct role on first login.
             if (roleToAssign) {
-                const roleDocRef = doc(db, "user_roles", email);
-                await setDoc(roleDocRef, { role: roleToAssign });
+                const result = await preRegisterUserRole({ email, role: roleToAssign });
+                if (!result.success) {
+                    throw new Error("Failed to set user role. Please try again.");
+                }
             }
-            
+
             // 1. Create the user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             // 2. Set their display name in their auth profile, so we can use it on first login.
             await updateProfile(user, { displayName: name });
-
+            
             // 3. Send the verification email.
             await sendEmailVerification(user);
-            
+
             // 4. Sign the user out so they must verify their email before logging in.
             await signOut(auth);
 
@@ -72,28 +74,33 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
         } catch (err: any) {
             console.error("Firebase Auth Error:", err);
             let message: React.ReactNode;
-            switch (err.code) {
-                case 'auth/email-already-in-use':
-                    message = (
-                        <>
-                            This email address is already in use.{" "}
-                            <Link href="/signup" className="font-bold underline hover:text-destructive-foreground">
-                                Please sign in instead.
-                            </Link>
-                        </>
-                    );
-                    break;
-                case 'auth/invalid-email':
-                    message = "The email address you entered is not valid.";
-                    break;
-                case 'auth/operation-not-allowed':
-                    message = "Account creation is not enabled. Please contact an administrator.";
-                    break;
-                case 'auth/weak-password':
-                    message = "The password is too weak. Please use at least 6 characters.";
-                    break;
-                default:
-                    message = `An unexpected error occurred: ${err.message}`;
+             // Check for the specific permission error first
+            if (err.message?.includes('Missing or insufficient permissions')) {
+                message = "An unexpected error occurred: Missing or insufficient permissions.";
+            } else {
+                switch (err.code) {
+                    case 'auth/email-already-in-use':
+                        message = (
+                            <>
+                                This email address is already in use.{" "}
+                                <Link href="/signup" className="font-bold underline hover:text-destructive-foreground">
+                                    Please sign in instead.
+                                </Link>
+                            </>
+                        );
+                        break;
+                    case 'auth/invalid-email':
+                        message = "The email address you entered is not valid.";
+                        break;
+                    case 'auth/operation-not-allowed':
+                        message = "Account creation is not enabled. Please contact an administrator.";
+                        break;
+                    case 'auth/weak-password':
+                        message = "The password is too weak. Please use at least 6 characters.";
+                        break;
+                    default:
+                        message = `An unexpected error occurred: ${err.message}`;
+                }
             }
             setError(message);
         } finally {
