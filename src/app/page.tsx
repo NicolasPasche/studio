@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Code, Shield, UserCog, Users, ChevronUp } from 'lucide-react';
+import { Code, Shield, UserCog, Users, ChevronLeft } from 'lucide-react';
 
 
 export default function SignUpPage() {
@@ -23,8 +23,9 @@ export default function SignUpPage() {
         description="Enter your details to sign up for a sales role"
         roleToAssign="sales"
       />
-      <div className="fixed bottom-4 right-4 flex items-center gap-2">
-        <TooltipProvider>
+      <TooltipProvider>
+        {/* Standard Roles */}
+        <div className="fixed bottom-4 right-4 flex items-center gap-2">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button asChild variant="outline" size="icon" className="rounded-full">
@@ -51,22 +52,25 @@ export default function SignUpPage() {
                     <p>HR Sign Up</p>
                 </TooltipContent>
             </Tooltip>
-
+        </div>
+        
+        {/* Advanced Roles */}
+        <div className="fixed top-1/2 right-4 -translate-y-1/2">
             <DropdownMenu>
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="icon" className="rounded-full">
-                                <ChevronUp className="h-4 w-4" />
+                                <ChevronLeft className="h-4 w-4" />
                                 <span className="sr-only">Advanced sign-up options</span>
                             </Button>
                         </DropdownMenuTrigger>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent side="left">
                         <p>Advanced Sign Up</p>
                     </TooltipContent>
                 </Tooltip>
-                <DropdownMenuContent align="end" side="top">
+                <DropdownMenuContent align="end" side="left">
                     <DropdownMenuLabel>Advanced Roles</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
@@ -83,9 +87,8 @@ export default function SignUpPage() {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-
-        </TooltipProvider>
-      </div>
+        </div>
+      </TooltipProvider>
     </div>
   );
 }
