@@ -178,7 +178,7 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [toast]);
 
   const handleRoleChange = async (userId: string, email: string, newRole: UserRole) => {
     if (!realUser) {
@@ -319,7 +319,7 @@ export default function UserManagementPage() {
                 Invite, view, and manage user roles across the application.
               </CardDescription>
             </div>
-            {currentUser?.role === 'admin' && <InviteUserDialog />}
+            {(currentUser?.role === 'admin' || currentUser?.role === 'dev') && <InviteUserDialog />}
           </div>
         </CardHeader>
         <CardContent>
