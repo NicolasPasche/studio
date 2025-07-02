@@ -50,33 +50,27 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // 2. IMMEDIATELY send the verification email before making any other changes.
-            // This prevents the verification link from being invalidated.
-            await sendEmailVerification(user);
-
-            // 3. Determine the user's role
+            // 2. Determine the user's role
             let finalRole: UserRole = roleToAssign || 'sales';
-            const roleDocRef = doc(db, "user_roles", email);
-            const roleDocSnap = await getDoc(roleDocRef);
-            if (roleDocSnap.exists()) {
-                finalRole = roleDocSnap.data().role as UserRole;
+            if (!roleToAssign) {
+              const roleDocRef = doc(db, "user_roles", email);
+              const roleDocSnap = await getDoc(roleDocRef);
+              if (roleDocSnap.exists()) {
+                  finalRole = roleDocSnap.data().role as UserRole;
+              }
             }
-             
-            // 4. Now, perform other async setup tasks.
-            // Using Promise.all to run them concurrently for efficiency.
-            await Promise.all([
-              // Update their profile with their name
-              updateProfile(user, {
-                  displayName: name,
-              }),
-              // Create their user record in the database
-              setDoc(doc(db, "users", user.uid), {
-                 name: name,
-                 email: email,
-                 role: finalRole,
-                 createdAt: serverTimestamp()
-              })
-            ]);
+            
+            // 3. Create their user record in the database
+            // The user's name is stored here. The app will read from this record.
+            await setDoc(doc(db, "users", user.uid), {
+               name: name,
+               email: email,
+               role: finalRole,
+               createdAt: serverTimestamp()
+            });
+
+            // 4. Send the verification email.
+            await sendEmailVerification(user);
 
             // 5. Sign the user out until they verify
             await signOut(auth);
