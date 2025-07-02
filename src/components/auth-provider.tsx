@@ -4,7 +4,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser, signOut } from "firebase/auth";
-import { collection, query, where, getDocs, limit, doc, getDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { User, UserRole, users as mockUsers } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -57,10 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const userEmail = firebaseUser.email!;
                 const userName = firebaseUser.displayName || userEmail.split('@')[0];
                 
-                // Determine role from 'user_roles' (invite system) or default
                 let determinedRole: UserRole = 'sales'; // Default role
                 
-                // For dev accounts, ensure role is 'dev'
+                // Correctly determine the role, prioritizing dev accounts
                 if (developerEmails.includes(userEmail)) {
                     determinedRole = 'dev';
                 } else {
