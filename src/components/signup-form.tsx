@@ -50,7 +50,11 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // 2. Determine the user's role
+            // 2. Send the verification email IMMEDIATELY after user creation in Auth.
+            // This is critical to ensure the user receives the email even if a DB write fails.
+            await sendEmailVerification(user);
+            
+            // 3. Determine the user's role
             let determinedRole: UserRole = roleToAssign || 'sales';
             if (!roleToAssign) {
               const roleDocRef = doc(db, "user_roles", email);
@@ -60,7 +64,7 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
               }
             }
             
-            // 3. Create their user record in the database
+            // 4. Create their user record in the database
             await setDoc(doc(db, "users", user.uid), {
                name: name,
                email: email,
@@ -68,9 +72,6 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                createdAt: serverTimestamp(),
                emailVerified: false,
             });
-
-            // 4. Send the verification email.
-            await sendEmailVerification(user);
 
             // 5. Sign the user out so they must verify their email before logging in.
             await signOut(auth);
