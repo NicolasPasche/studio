@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateProfile } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import type { UserRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,16 +20,14 @@ import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
-import { preRegisterUserRole } from '@/ai/flows/user-role-flow';
 
 interface SignUpFormProps {
     title: string;
     description: string;
-    roleToAssign?: UserRole;
     showLoginLink?: boolean;
 }
 
-export function SignUpForm({ title, description, roleToAssign, showLoginLink = true }: SignUpFormProps) {
+export function SignUpForm({ title, description, showLoginLink = true }: SignUpFormProps) {
     const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -46,15 +43,6 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
         setSuccess(false);
 
         try {
-            // If signing up for a specific role (dev/admin), call the server action to pre-create the role document.
-            // This allows AuthProvider to assign the correct role on first login.
-            if (roleToAssign) {
-                const result = await preRegisterUserRole({ email, role: roleToAssign });
-                if (!result.success) {
-                    throw new Error(result.error || "Failed to set user role. Please try again.");
-                }
-            }
-
             // 1. Create the user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;

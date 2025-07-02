@@ -7,7 +7,6 @@ export default function AdminSignUpPage() {
       <SignUpForm
         title="Admin Sign Up"
         description="Create a new administrator account with full permissions"
-        roleToAssign="admin"
         showLoginLink={false}
       />
     </div>

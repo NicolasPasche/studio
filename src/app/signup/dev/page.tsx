@@ -7,7 +7,6 @@ export default function DevSignUpPage() {
       <SignUpForm
         title="Developer Sign Up"
         description="Create a new developer account with impersonation abilities"
-        roleToAssign="dev"
         showLoginLink={false}
       />
     </div>
