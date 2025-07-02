@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createUserWithEmailAndPassword, updateProfile, signOut, sendEmailVerification } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { UserRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -55,22 +55,32 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                 displayName: name,
             });
 
-            // 3. Create their user record in the database with the assigned role
+            // 3. Determine the user's role
+            let finalRole: UserRole = roleToAssign || 'sales';
+            // Check for a pre-assigned role for invited users
+            const roleDocRef = doc(db, "user_roles", email);
+            const roleDocSnap = await getDoc(roleDocRef);
+            if (roleDocSnap.exists()) {
+                finalRole = roleDocSnap.data().role as UserRole;
+            }
+
+            // 4. Create their user record in the database with the assigned role
+            // Using the UID as the document ID prevents duplicates.
             const userDocRef = doc(db, "users", user.uid);
             await setDoc(userDocRef, {
                name: name,
                email: email,
-               role: roleToAssign || 'sales',
+               role: finalRole,
                createdAt: serverTimestamp()
             });
 
-            // 4. Send the verification email
+            // 5. Send the verification email
             await sendEmailVerification(user);
 
-            // 5. Sign the user out until they verify
+            // 6. Sign the user out until they verify
             await signOut(auth);
 
-            // 6. Show the success message
+            // 7. Show the success message
             setSuccess(true);
 
         } catch (err: any) {
