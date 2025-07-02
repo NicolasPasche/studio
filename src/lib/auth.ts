@@ -8,6 +8,7 @@ export interface User {
   avatar: string;
   initials: string;
   emailVerified: boolean;
+  disabled?: boolean;
 }
 
 export const users: Record<UserRole, User> = {
@@ -18,6 +19,7 @@ export const users: Record<UserRole, User> = {
     avatar: "/avatars/01.png",
     initials: "AJ",
     emailVerified: true,
+    disabled: false,
   },
   admin: {
     name: "Maria Garcia",
@@ -26,6 +28,7 @@ export const users: Record<UserRole, User> = {
     avatar: "/avatars/02.png",
     initials: "MG",
     emailVerified: true,
+    disabled: false,
   },
   proposal: {
     name: "David Chen",
@@ -34,6 +37,7 @@ export const users: Record<UserRole, User> = {
     avatar: "/avatars/03.png",
     initials: "DC",
     emailVerified: true,
+    disabled: false,
   },
   hr: {
     name: "Sarah Lee",
@@ -42,6 +46,7 @@ export const users: Record<UserRole, User> = {
     avatar: "/avatars/04.png",
     initials: "SL",
     emailVerified: true,
+    disabled: false,
   },
   dev: {
     name: "Dev User",
@@ -50,6 +55,7 @@ export const users: Record<UserRole, User> = {
     avatar: "/avatars/05.png",
     initials: "DV",
     emailVerified: true,
+    disabled: false,
   }
 };
 

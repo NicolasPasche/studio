@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     role: roleFromSignUp,
                     createdAt: serverTimestamp(),
                     emailVerified: true,
+                    disabled: false,
                 };
                 
                 await setDoc(userDocRef, newUserRecord);
@@ -93,6 +94,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // By now, the document should exist.
         if (userDocSnap.exists()) {
           const dbData = userDocSnap.data();
+
+          if (dbData.disabled) {
+            toast({
+                variant: "destructive",
+                title: "Account Restricted",
+                description: "This account has been restricted by an administrator.",
+            });
+            await signOut(auth);
+            setRealUser(null);
+            setLoading(false);
+            router.replace("/signup");
+            return;
+          }
           
           const userRole = dbData.role as UserRole;
           const userDataFromDb: User = {
@@ -102,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             avatar: mockUsers[userRole]?.avatar || "",
             initials: (dbData.name || "").substring(0, 2).toUpperCase(),
             emailVerified: dbData.emailVerified,
+            disabled: dbData.disabled || false,
           };
           setRealUser(userDataFromDb);
         } else {

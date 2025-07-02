@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -12,7 +13,7 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { User, UserRole, roleDisplayNames } from '@/lib/auth';
+import { UserRole, roleDisplayNames } from '@/lib/auth';
 import {
   Card,
   CardContent,
@@ -28,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
@@ -67,13 +69,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { UserPlus, Shield, Briefcase, UserCog, Users, Code, MoreHorizontal, Trash2 } from 'lucide-react';
+import { UserPlus, Shield, Briefcase, UserCog, Users, Code, MoreHorizontal, Trash2, Lock, Unlock } from 'lucide-react';
 
 type DisplayUser = {
   id: string; // Firebase Auth UID
   name: string;
   email: string;
   role: UserRole;
+  disabled?: boolean;
 };
 
 function InviteUserDialog({ onUserInvited }: { onUserInvited: () => void }) {
@@ -193,7 +196,9 @@ export default function UserManagementPage() {
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<DisplayUser | null>(null);
-  
+  const [isRestrictAlertOpen, setIsRestrictAlertOpen] = useState(false);
+  const [userToRestrict, setUserToRestrict] = useState<DisplayUser | null>(null);
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -301,6 +306,52 @@ export default function UserManagementPage() {
         setIsDeleteAlertOpen(false);
     }
   };
+  
+  const handleRestrictClick = (user: DisplayUser) => {
+    setUserToRestrict(user);
+    setIsRestrictAlertOpen(true);
+  };
+
+  const confirmRestrict = async () => {
+    if (!userToRestrict || !realUser) {
+        toast({ variant: "destructive", title: "Error", description: "Cannot update user status. Missing information." });
+        setIsRestrictAlertOpen(false);
+        return;
+    }
+
+    const newDisabledState = !userToRestrict.disabled;
+    const actionText = newDisabledState ? 'restricted' : 'unrestricted';
+
+    try {
+        const userDocRef = doc(db, "users", userToRestrict.id);
+        await updateDoc(userDocRef, { disabled: newDisabledState });
+
+        await addDoc(collection(db, 'activities'), {
+            type: 'User Status Change',
+            description: `User ${userToRestrict.name} (${userToRestrict.email}) was ${actionText}.`,
+            timestamp: serverTimestamp(),
+            userId: realUser.email,
+            userName: realUser.name,
+        });
+
+        toast({
+            title: "User Status Updated",
+            description: `${userToRestrict.name} has been successfully ${actionText}.`
+        });
+
+        setUsers(prevUsers => prevUsers.map(u => u.id === userToRestrict.id ? { ...u, disabled: newDisabledState } : u));
+        setUserToRestrict(null);
+    } catch (error) {
+        console.error(`Error updating user status:`, error);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: "Could not update the user's status. Please try again."
+        });
+    } finally {
+        setIsRestrictAlertOpen(false);
+    }
+  };
 
   return (
     <>
@@ -322,6 +373,7 @@ export default function UserManagementPage() {
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="w-[220px]">Role</TableHead>
                 <TableHead className="text-right">
                   <span className="sr-only">Actions</span>
@@ -331,11 +383,11 @@ export default function UserManagementPage() {
             <TableBody>
               {loading ? (
                   <TableRow>
-                      <TableCell colSpan={4} className="text-center">Loading users...</TableCell>
+                      <TableCell colSpan={5} className="text-center">Loading users...</TableCell>
                   </TableRow>
               ) : users.length === 0 ? (
                   <TableRow>
-                      <TableCell colSpan={4} className="text-center h-24">No users found.</TableCell>
+                      <TableCell colSpan={5} className="text-center h-24">No users found.</TableCell>
                   </TableRow>
               ) : (
                   users.map((user) => {
@@ -344,6 +396,11 @@ export default function UserManagementPage() {
                       <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.name}</TableCell>
                           <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            <Badge variant={user.disabled ? "destructive" : "default"} className={!user.disabled ? "bg-accent text-accent-foreground" : ""}>
+                                {user.disabled ? "Restricted" : "Active"}
+                            </Badge>
+                          </TableCell>
                           <TableCell>
                           {user.role === 'dev' ? (
                               <div className="flex items-center">
@@ -354,7 +411,7 @@ export default function UserManagementPage() {
                               <Select
                                   value={user.role}
                                   onValueChange={(newRole) => handleRoleChange(user.id, user.email, newRole as UserRole)}
-                                  disabled={isCurrentUser}
+                                  disabled={isCurrentUser || realUser?.role !== 'admin'}
                               >
                                   <SelectTrigger className="w-full">
                                       <SelectValue placeholder="Select role" />
@@ -369,27 +426,39 @@ export default function UserManagementPage() {
                           )}
                           </TableCell>
                           <TableCell className="text-right">
-                              {(realUser?.role === 'admin' || realUser?.role === 'dev') && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                            <span className="sr-only">Toggle menu</span>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="icon" disabled={isCurrentUser}>
+                                          <MoreHorizontal className="h-4 w-4" />
+                                          <span className="sr-only">Toggle menu</span>
+                                      </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                      {realUser?.role === 'admin' && (
                                         <DropdownMenuItem
-                                            className="text-destructive"
-                                            onClick={() => handleDeleteClick(user)}
-                                            disabled={realUser?.email === user.email || user.role === 'dev'}
+                                            onClick={() => handleRestrictClick(user)}
+                                            disabled={user.role === 'dev' || isCurrentUser}
                                         >
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete User
+                                            {user.disabled ? (
+                                                <><Unlock className="mr-2 h-4 w-4" /> Unrestrict User</>
+                                            ) : (
+                                                <><Lock className="mr-2 h-4 w-4" /> Restrict User</>
+                                            )}
                                         </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
+                                      )}
+                                      {realUser?.role === 'dev' && (
+                                          <DropdownMenuItem
+                                              className="text-destructive"
+                                              onClick={() => handleDeleteClick(user)}
+                                              disabled={isCurrentUser || user.role === 'dev'}
+                                          >
+                                              <Trash2 className="mr-2 h-4 w-4" />
+                                              Delete User
+                                          </DropdownMenuItem>
+                                      )}
+                                  </DropdownMenuContent>
+                              </DropdownMenu>
                           </TableCell>
                       </TableRow>
                     )
@@ -399,6 +468,7 @@ export default function UserManagementPage() {
           </Table>
         </CardContent>
       </Card>
+
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -413,7 +483,27 @@ export default function UserManagementPage() {
                     <AlertDialogAction onClick={confirmDelete} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
-        </AlertDialog>
+      </AlertDialog>
+
+      <AlertDialog open={isRestrictAlertOpen} onOpenChange={setIsRestrictAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will {userToRestrict?.disabled ? 'restore access for' : 'prevent'} {userToRestrict?.name} from accessing the application.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setUserToRestrict(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={confirmRestrict} 
+                      className={buttonVariants({ variant: userToRestrict?.disabled ? 'default' : "destructive" })}
+                    >
+                        {userToRestrict?.disabled ? 'Unrestrict' : 'Restrict'}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
