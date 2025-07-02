@@ -26,17 +26,65 @@ import { storage, db, auth } from "@/lib/firebase";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
+import { Textarea } from "@/components/ui/textarea";
 
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
 
+  const [name, setName] = useState(user?.name || '');
+  const [readme, setReadme] = useState(user?.readme || '');
+  const [isSaving, setIsSaving] = useState(false);
+
   const [isPushEnabled, setIsPushEnabled] = useState(false);
   const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
   const [isPushLoading, setIsPushLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user) {
+        setName(user.name);
+        setReadme(user.readme || '');
+    }
+  }, [user]);
+
+  const handleSaveChanges = async () => {
+    if (!user || !auth.currentUser) {
+        toast({ variant: "destructive", title: "Error", description: "You must be logged in to save changes." });
+        return;
+    }
+
+    setIsSaving(true);
+    try {
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        const updates: { name?: string; readme?: string } = {};
+
+        if (name !== user.name) {
+            updates.name = name;
+        }
+        if (readme !== user.readme) {
+            updates.readme = readme;
+        }
+
+        if (Object.keys(updates).length > 0) {
+            await updateDoc(userDocRef, updates);
+            if (updates.name) {
+                await updateProfile(auth.currentUser, { displayName: updates.name });
+            }
+            updateUser(updates); // Update local state
+            toast({ title: "Profile Updated", description: "Your changes have been saved." });
+        } else {
+            toast({ title: "No Changes", description: "You haven't made any changes to save." });
+        }
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        toast({ variant: "destructive", title: "Update Failed", description: "Could not save your changes." });
+    } finally {
+        setIsSaving(false);
+    }
+  };
 
   const syncPermissions = useCallback(() => {
     if (!('Notification' in window)) {
@@ -175,7 +223,7 @@ export default function SettingsPage() {
               <CardTitle>Profile</CardTitle>
               <CardDescription>Update your personal information.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
                     <AvatarImage src={user.avatar} />
@@ -203,16 +251,23 @@ export default function SettingsPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" defaultValue={user.name} />
+                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input id="email" type="email" defaultValue={user.email} disabled />
                 </div>
               </div>
+               <div className="space-y-2">
+                  <Label htmlFor="readme">Profile Readme</Label>
+                  <Textarea id="readme" value={readme} onChange={(e) => setReadme(e.target.value)} placeholder="Write a short bio about yourself..." rows={4} disabled={isSaving} />
+                  <p className="text-sm text-muted-foreground">A brief description about you. This will be visible to other users.</p>
+                </div>
             </CardContent>
             <CardFooter>
-              <Button>Save Changes</Button>
+                <Button onClick={handleSaveChanges} disabled={isSaving}>
+                    {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Changes'}
+                </Button>
             </CardFooter>
           </Card>
         </TabsContent>

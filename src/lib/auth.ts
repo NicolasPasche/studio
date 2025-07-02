@@ -10,6 +10,7 @@ export interface User {
   initials: string;
   emailVerified: boolean;
   disabled?: boolean;
+  readme?: string;
 }
 
 export const users: Record<UserRole, User> = {
@@ -22,6 +23,7 @@ export const users: Record<UserRole, User> = {
     initials: "AJ",
     emailVerified: true,
     disabled: false,
+    readme: "Sales professional focused on driving growth and building strong customer relationships.",
   },
   admin: {
     uid: "mock-admin-uid",
@@ -32,6 +34,7 @@ export const users: Record<UserRole, User> = {
     initials: "MG",
     emailVerified: true,
     disabled: false,
+    readme: "Administrator overseeing system operations and user management.",
   },
   proposal: {
     uid: "mock-proposal-uid",
@@ -42,6 +45,7 @@ export const users: Record<UserRole, User> = {
     initials: "DC",
     emailVerified: true,
     disabled: false,
+    readme: "Proposal engineer specializing in formwork solutions.",
   },
   hr: {
     uid: "mock-hr-uid",
@@ -52,6 +56,7 @@ export const users: Record<UserRole, User> = {
     initials: "SL",
     emailVerified: true,
     disabled: false,
+    readme: "Human resources manager dedicated to fostering a positive work environment.",
   },
   dev: {
     uid: "mock-dev-uid",
@@ -62,6 +67,7 @@ export const users: Record<UserRole, User> = {
     initials: "DV",
     emailVerified: true,
     disabled: false,
+    readme: "Developer building and maintaining the Tobler Workflow application.",
   }
 };
 

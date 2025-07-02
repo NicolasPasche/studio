@@ -71,6 +71,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { UserPlus, Shield, Briefcase, UserCog, Users, Code, MoreHorizontal, Trash2, Lock, Unlock, Copy } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 
 type DisplayUser = {
   id: string; // Firebase Auth UID
@@ -78,6 +80,9 @@ type DisplayUser = {
   email: string;
   role: UserRole;
   disabled?: boolean;
+  avatar?: string;
+  initials?: string;
+  readme?: string;
 };
 
 function InviteUserDialog() {
@@ -144,6 +149,36 @@ function InviteUserDialog() {
   );
 }
 
+function UserProfileDialog({ user, isOpen, onOpenChange }: { user: DisplayUser | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
+    if (!user) return null;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader className="items-center text-center">
+                    <Avatar className="h-20 w-20 mb-4">
+                        <AvatarImage src={user.avatar} />
+                        <AvatarFallback>{user.initials}</AvatarFallback>
+                    </Avatar>
+                    <DialogTitle className="text-2xl">{user.name}</DialogTitle>
+                    <DialogDescription>{roleDisplayNames[user.role]}</DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Separator />
+                    <div className="prose prose-sm dark:prose-invert mx-auto mt-4 text-center text-muted-foreground max-w-none">
+                       <p className="whitespace-pre-wrap">{user.readme || "This user hasn't written a readme yet."}</p>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="outline">Close</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export default function UserManagementPage() {
   const [users, setUsers] = useState<DisplayUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,16 +188,27 @@ export default function UserManagementPage() {
   const [userToDelete, setUserToDelete] = useState<DisplayUser | null>(null);
   const [isRestrictAlertOpen, setIsRestrictAlertOpen] = useState(false);
   const [userToRestrict, setUserToRestrict] = useState<DisplayUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<DisplayUser | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const usersCollection = collection(db, 'users');
       const usersSnapshot = await getDocs(usersCollection);
-      const usersList = usersSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<DisplayUser, 'id'>),
-      }));
+      const usersList = usersSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || '',
+          email: data.email || '',
+          role: data.role || 'sales',
+          disabled: data.disabled || false,
+          avatar: data.avatar || '',
+          initials: (data.name || '').substring(0, 2).toUpperCase(),
+          readme: data.readme || '',
+        }
+      });
       setUsers(usersList);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -179,6 +225,11 @@ export default function UserManagementPage() {
   useEffect(() => {
     fetchUsers();
   }, [toast]);
+  
+  const handleViewProfile = (user: DisplayUser) => {
+    setSelectedUser(user);
+    setIsProfileOpen(true);
+  };
 
   const handleRoleChange = async (userId: string, email: string, newRole: UserRole) => {
     if (!realUser) {
@@ -350,7 +401,15 @@ export default function UserManagementPage() {
                     const canAdminRestrict = currentUser?.role === 'admin' && user.role !== 'dev' && !isCurrentUser;
                     return (
                       <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.name}</TableCell>
+                          <TableCell className="font-medium">
+                            <button className="flex items-center gap-2 text-left hover:underline" onClick={() => handleViewProfile(user)}>
+                               <Avatar className="h-8 w-8">
+                                  <AvatarImage src={user.avatar} />
+                                  <AvatarFallback>{user.initials}</AvatarFallback>
+                              </Avatar>
+                              <span>{user.name}</span>
+                            </button>
+                          </TableCell>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>
                             {canAdminRestrict ? (
@@ -436,6 +495,12 @@ export default function UserManagementPage() {
           </Table>
         </CardContent>
       </Card>
+      
+      <UserProfileDialog
+        user={selectedUser}
+        isOpen={isProfileOpen}
+        onOpenChange={setIsProfileOpen}
+      />
 
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
             <AlertDialogContent>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react";
@@ -28,7 +29,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUser = useCallback((newUserData: Partial<User>) => {
     setRealUser(prevUser => {
         if (!prevUser) return null;
-        return { ...prevUser, ...newUserData };
+        const updatedUser = { ...prevUser, ...newUserData };
+        if (newUserData.name) {
+            updatedUser.initials = (newUserData.name || "").substring(0, 2).toUpperCase();
+        }
+        return updatedUser;
     });
   }, []);
 
@@ -76,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     createdAt: serverTimestamp(),
                     emailVerified: true, // They must be verified to get here
                     disabled: false,
+                    readme: '',
                 };
                 
                 await setDoc(userDocRef, newUserRecord);
@@ -127,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             initials: (dbData.name || "").substring(0, 2).toUpperCase(),
             emailVerified: dbData.emailVerified,
             disabled: dbData.disabled || false,
+            readme: dbData.readme || '',
           };
           setRealUser(userDataFromDb);
         } else {
