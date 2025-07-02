@@ -12,6 +12,7 @@ export default function SignUpPage() {
       <SignUpForm
         title="Create an Account"
         description="Enter your details to sign up"
+        roleToAssign="sales"
       />
       <div className="fixed bottom-4 right-4 flex gap-2">
         <TooltipProvider>

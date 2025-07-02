@@ -20,14 +20,16 @@ import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { UserRole } from '@/lib/auth';
 
 interface SignUpFormProps {
     title: string;
     description: string;
     showLoginLink?: boolean;
+    roleToAssign?: UserRole;
 }
 
-export function SignUpForm({ title, description, showLoginLink = true }: SignUpFormProps) {
+export function SignUpForm({ title, description, showLoginLink = true, roleToAssign = 'sales' }: SignUpFormProps) {
     const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -47,8 +49,10 @@ export function SignUpForm({ title, description, showLoginLink = true }: SignUpF
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // 2. Set their display name in their auth profile, so we can use it on first login.
-            await updateProfile(user, { displayName: name });
+            // 2. Set their display name with a role suffix for later processing.
+            // This is a simple way to pass the role info to the first-login logic.
+            const displayNameWithRole = `${name}__${roleToAssign}`;
+            await updateProfile(user, { displayName: displayNameWithRole });
             
             // 3. Send the verification email.
             await sendEmailVerification(user);

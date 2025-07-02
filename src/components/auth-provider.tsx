@@ -1,15 +1,12 @@
-
 "use client";
 
 import React, { createContext, useState, useEffect, ReactNode, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged, User as FirebaseUser, signOut } from "firebase/auth";
-import { doc, getDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { onAuthStateChanged, User as FirebaseUser, signOut, updateProfile } from "firebase/auth";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { User, UserRole, users as mockUsers } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { developerEmails } from "@/lib/dev-accounts";
-import { adminEmails } from "@/lib/admin-accounts";
 
 export interface AuthContextType {
   user: User | null;
@@ -56,26 +53,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!userDocSnap.exists()) {
             try {
                 const userEmail = firebaseUser.email!;
-                const userName = firebaseUser.displayName || userEmail.split('@')[0];
+                const displayName = firebaseUser.displayName || userEmail.split('@')[0];
                 
-                let determinedRole: UserRole;
-                if (adminEmails.includes(userEmail)) {
-                    determinedRole = 'admin';
-                } else if (developerEmails.includes(userEmail)) {
-                    determinedRole = 'dev';
-                } else {
-                    determinedRole = 'sales';
-                }
+                // Parse the role from the display name suffix
+                const nameParts = displayName.split('__');
+                const cleanedName = nameParts[0];
+                const roleFromSignUp = (nameParts[1] || 'sales') as UserRole;
                 
                 const newUserRecord = {
-                    name: userName,
+                    name: cleanedName,
                     email: userEmail,
-                    role: determinedRole,
+                    role: roleFromSignUp,
                     createdAt: serverTimestamp(),
                     emailVerified: true,
                 };
                 
                 await setDoc(userDocRef, newUserRecord);
+
+                // Clean up the display name in Firebase Auth profile
+                if (displayName !== cleanedName) {
+                    await updateProfile(firebaseUser, { displayName: cleanedName });
+                }
+
                 userDocSnap = await getDoc(userDocRef); // Re-fetch the snapshot
             } catch (error) {
                 console.error("Failed to create user document in Firestore:", error);
@@ -94,12 +93,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // By now, the document should exist.
         if (userDocSnap.exists()) {
           const dbData = userDocSnap.data();
-
-          // Sync email verification status from Auth to Firestore
-          if (firebaseUser.emailVerified && !dbData.emailVerified) {
-            await updateDoc(userDocRef, { emailVerified: true });
-            dbData.emailVerified = true;
-          }
           
           const userRole = dbData.role as UserRole;
           const userDataFromDb: User = {
