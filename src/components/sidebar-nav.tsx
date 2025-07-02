@@ -45,6 +45,7 @@ const navLinksByRole: Record<UserRole, { href: string; label: string; icon: Reac
   ],
   dev: [
      { href: "/dashboard/dev", label: "Dev Controls", icon: Code },
+     { href: "/users", label: "User Management", icon: UserCog },
      { href: "/system-health", label: "System Health", icon: BarChart3 },
   ]
 };
