@@ -103,45 +103,102 @@ export default function SettingsPage() {
     const file = event.target.files?.[0];
     if (!file || !user || !auth.currentUser) return;
 
-    // Validate file type
-    if (!['image/png', 'image/jpeg'].includes(file.type)) {
-        toast({
-            variant: "destructive",
-            title: "Invalid File Type",
-            description: "Please select a PNG or JPG image.",
-        });
-        return;
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid File Type',
+        description: 'Please select a PNG or JPG image.',
+      });
+      return;
     }
 
     setIsUploading(true);
+
+    const resizeImage = (file: File): Promise<Blob> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 256;
+            const MAX_HEIGHT = 256;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              return reject(new Error('Could not get canvas context'));
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error('Canvas to Blob conversion failed'));
+                }
+              },
+              'image/jpeg',
+              0.9
+            );
+          };
+          img.onerror = (err) => reject(err);
+          if (e.target?.result) {
+             img.src = e.target.result as string;
+          } else {
+            reject(new Error('File could not be read.'));
+          }
+        };
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+      });
+    };
+
     try {
-        const avatarRef = storageRef(storage, `avatars/${auth.currentUser.uid}`);
-        const snapshot = await uploadBytes(avatarRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
+      const resizedImageBlob = await resizeImage(file);
+      const avatarRef = storageRef(storage, `avatars/${auth.currentUser.uid}`);
+      await uploadBytes(avatarRef, resizedImageBlob);
+      const downloadURL = await getDownloadURL(avatarRef);
 
-        // Update user's auth profile
-        await updateProfile(auth.currentUser, { photoURL: downloadURL });
-        
-        // Update user's document in Firestore
-        const userDocRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userDocRef, { avatar: downloadURL });
+      await updateProfile(auth.currentUser, { photoURL: downloadURL });
 
-        // Update local state via context to reflect change immediately
-        updateUser({ avatar: downloadURL });
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userDocRef, { avatar: downloadURL });
 
-        toast({
-            title: "Profile Photo Updated",
-            description: "Your new photo has been saved.",
-        });
+      updateUser({ avatar: downloadURL });
+
+      toast({
+        title: 'Profile Photo Updated',
+        description: 'Your new photo has been saved.',
+      });
     } catch (error) {
-        console.error("Error uploading photo:", error);
-        toast({
-            variant: "destructive",
-            title: "Upload Failed",
-            description: "There was an error updating your photo. Please try again.",
-        });
+      console.error('Error uploading photo:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Upload Failed',
+        description:
+          'There was an error updating your photo. Please try again.',
+      });
     } finally {
-        setIsUploading(false);
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
