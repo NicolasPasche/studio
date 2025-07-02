@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, signOut, sendEmailVerification } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { UserRole } from "@/lib/auth";
@@ -35,7 +35,7 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    const [error, setError] = useState<React.ReactNode>('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
@@ -61,7 +61,6 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
             }
             
             // 3. Create their user record in the database
-            // The user's name is stored here. The app will read from this record.
             await setDoc(doc(db, "users", user.uid), {
                name: name,
                email: email,
@@ -80,10 +79,17 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
 
         } catch (err: any) {
             console.error("Firebase Auth Error:", err);
-            let message;
+            let message: React.ReactNode;
             switch (err.code) {
                 case 'auth/email-already-in-use':
-                    message = "This email address is already in use by another account.";
+                    message = (
+                        <>
+                            This email address is already in use.{" "}
+                            <Link href="/signup" className="font-bold underline hover:text-destructive-foreground">
+                                Please sign in instead.
+                            </Link>
+                        </>
+                    );
                     break;
                 case 'auth/invalid-email':
                     message = "The email address you entered is not valid.";
