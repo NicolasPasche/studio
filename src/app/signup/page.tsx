@@ -20,6 +20,7 @@ import {Label} from '@/components/ui/label';
 import {Icons} from '@/components/icons';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {AlertTriangle, Loader2} from 'lucide-react';
+import { developerEmails } from '@/lib/dev-accounts';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,9 +43,7 @@ export default function LoginPage() {
       await user.reload();
 
       // 3. Check if user is a developer (for bypass)
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      const isDevUser = userDocSnap.exists() && userDocSnap.data().role === 'dev';
+      const isDevUser = developerEmails.includes(user.email || '');
       
       // 4. Check for verification. Allow access if verified OR if they are a dev user.
       if (user.emailVerified || isDevUser) {

@@ -8,6 +8,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { User, UserRole, users as mockUsers } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { developerEmails } from "@/lib/dev-accounts";
 
 export interface AuthContextType {
   user: User | null;
@@ -31,12 +32,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setImpersonatedRole(null); // Reset impersonation on auth state change
 
       if (firebaseUser && firebaseUser.email) {
-        // User is authenticated, now check for their data document in Firestore.
+        const isDev = developerEmails.includes(firebaseUser.email);
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDocSnap = await getDoc(userDocRef);
 
-        if (userDocSnap.exists()) {
-          // User document exists, get role and data from there. This is the normal flow.
+        if (isDev) {
+          // For developers, we can construct their user object without relying
+          // on the Firestore doc necessarily existing. This helps with local setup.
+          // We'll still prefer the name from Firestore if it's there.
+          const name = userDocSnap.exists() ? userDocSnap.data().name : "Developer";
+          setRealUser({
+            name: name,
+            email: firebaseUser.email,
+            role: 'dev',
+            avatar: mockUsers.dev.avatar,
+            initials: name.substring(0, 2).toUpperCase(),
+          });
+        } else if (userDocSnap.exists()) {
+          // This is a regular user. Their document must exist in Firestore.
           const dbData = userDocSnap.data();
           const userRole = dbData.role as UserRole;
 
@@ -49,8 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setRealUser(userDataFromDb);
         } else {
-          // User is authenticated but has no document in the 'users' collection.
-          // This is an invalid state with the new sign-up flow. Deny access.
+          // Regular user is authenticated but has no document in the 'users' collection.
+          // This is an invalid state. Deny access.
           toast({
             variant: "destructive",
             title: "Access Denied",
