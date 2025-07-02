@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -156,26 +157,11 @@ export default function SettingsPage() {
   
   if (!user) {
     return (
-       <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-1/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </CardHeader>
-        </Card>
         <Skeleton className="h-96 w-full" />
-       </div>
     );
   }
 
   return (
-    <div className="grid gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Settings</CardTitle>
-          <CardDescription>Manage your account settings and preferences.</CardDescription>
-        </CardHeader>
-      </Card>
       <Tabs defaultValue="profile" className="w-full">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -325,6 +311,5 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
   );
 }
