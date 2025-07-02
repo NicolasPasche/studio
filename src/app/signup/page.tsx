@@ -48,9 +48,7 @@ export default function LoginPage() {
       // Get the latest user data
       await user.reload();
 
-      const isDev = developerEmails.includes(user.email || '');
-
-      if (!user.emailVerified && !isDev) {
+      if (!user.emailVerified) {
         setError("Please verify your email address before logging in. We've sent a link to your inbox.");
         await auth.signOut();
         setLoading(false);

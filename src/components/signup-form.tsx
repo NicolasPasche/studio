@@ -38,7 +38,6 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
     const [error, setError] = useState<React.ReactNode>('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
-    const [finalRole, setFinalRole] = useState<UserRole | null>(null);
 
     const handleSignUp = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -60,7 +59,6 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                   determinedRole = roleDocSnap.data().role as UserRole;
               }
             }
-            setFinalRole(determinedRole);
             
             // 3. Create their user record in the database
             await setDoc(doc(db, "users", user.uid), {
@@ -74,12 +72,8 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
             // 4. Send the verification email.
             await sendEmailVerification(user);
 
-            // 5. For non-dev users, sign them out until they verify their email.
-            // Dev users are kept logged in for a smoother experience and will be
-            // redirected to the dashboard by the AuthProvider.
-            if (determinedRole !== 'dev') {
-                await signOut(auth);
-            }
+            // 5. Sign the user out so they must verify their email before logging in.
+            await signOut(auth);
 
             // 6. Show the success message
             setSuccess(true);
@@ -127,12 +121,8 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
         }
     };
     
-    const isDevSignUp = finalRole === 'dev';
-    const successMessage = isDevSignUp
-      ? "Your developer account has been created. You will be redirected to the dashboard. A verification link has also been sent to your email for your records."
-      : "Your account has been created. We've sent a verification link to your email. Please check your inbox (and spam folder!) and click the link to activate your account before you can sign in.";
-    
-    const successTitle = isDevSignUp ? "Account Created & Logged In" : "Verification Email Sent";
+    const successMessage = "Your account has been created. We've sent a verification link to your email. Please check your inbox (and spam folder!) and click the link to activate your account before you can sign in.";
+    const successTitle = "Verification Email Sent";
 
     return (
         <Card className="w-full max-w-sm shadow-2xl animate-fade-in">
@@ -153,10 +143,10 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                         </AlertDescription>
                     </Alert>
                      <Button 
-                        onClick={() => router.push(isDevSignUp ? '/dashboard' : '/signup')} 
+                        onClick={() => router.push('/signup')} 
                         className="w-full"
                     >
-                        {isDevSignUp ? 'Go to Dashboard' : 'Proceed to Sign In'}
+                        Proceed to Sign In
                     </Button>
                 </CardContent>
             ) : (

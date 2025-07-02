@@ -33,10 +33,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (firebaseUser && firebaseUser.email) {
         await firebaseUser.reload(); // Get the latest user data
-        const isDev = developerEmails.includes(firebaseUser.email);
 
         // This check is now the single source of truth for allowing access.
-        if (!isDev && !firebaseUser.emailVerified) {
+        // It applies to all users, including developers.
+        if (!firebaseUser.emailVerified) {
             toast({
                 variant: "destructive",
                 title: "Email Verification Required",
@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return; 
         }
 
+        const isDev = developerEmails.includes(firebaseUser.email);
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("email", "==", firebaseUser.email), limit(1));
         const querySnapshot = await getDocs(q);
