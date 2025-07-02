@@ -44,14 +44,26 @@ export function SignUpForm({ title, description, showLoginLink = true, roleToAss
         setError('');
         setSuccess(false);
 
+        if (roleToAssign === 'dev' && !name.endsWith('__dev')) {
+            setError("To sign up as a developer, your first name must end with '__dev'.");
+            setLoading(false);
+            return;
+        }
+
         try {
             // 1. Create the user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             // 2. Set their display name with a role suffix for later processing.
-            // This is a simple way to pass the role info to the first-login logic.
-            const displayNameWithRole = `${name}__${roleToAssign}`;
+            let displayNameWithRole: string;
+            if (roleToAssign === 'dev') {
+                // For dev sign-up, the user is expected to enter the suffix manually.
+                displayNameWithRole = name;
+            } else {
+                // For other roles, we append the suffix automatically.
+                displayNameWithRole = `${name}__${roleToAssign}`;
+            }
             await updateProfile(user, { displayName: displayNameWithRole });
             
             // 3. Send the verification email.
@@ -139,8 +151,8 @@ export function SignUpForm({ title, description, showLoginLink = true, roleToAss
                             </Alert>
                         )}
                         <div className="space-y-2">
-                            <Label htmlFor="name">Full Name</Label>
-                            <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} />
+                            <Label htmlFor="name">First Name</Label>
+                            <Input id="name" placeholder="John" required value={name} onChange={(e) => setName(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
