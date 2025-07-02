@@ -4,10 +4,7 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,20 +27,24 @@ export function UserProfileDialog({ user, isOpen, onOpenChange }: { user: Profil
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
-                <DialogHeader className="items-center text-center">
-                    <Avatar className="h-20 w-20 mb-4">
+                <div className="flex items-center space-x-4">
+                    <Avatar className="h-20 w-20 flex-shrink-0">
                         <AvatarImage src={user.avatar} />
                         <AvatarFallback>{user.initials}</AvatarFallback>
                     </Avatar>
-                    <DialogTitle className="text-2xl">{user.name}</DialogTitle>
-                    <DialogDescription>{roleDisplayNames[user.role]}</DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
+                    <div className="space-y-1">
+                        <h2 className="text-2xl font-semibold leading-none tracking-tight">{user.name}</h2>
+                        <p className="text-sm text-muted-foreground">{roleDisplayNames[user.role]}</p>
+                    </div>
+                </div>
+
+                <div className="pt-2">
                     <Separator />
-                    <div className="prose prose-sm dark:prose-invert mx-auto mt-4 text-center text-muted-foreground max-w-none">
+                    <div className="prose prose-sm dark:prose-invert mt-4 text-muted-foreground max-w-none">
                        <p className="whitespace-pre-wrap">{user.readme || "This user hasn't written a readme yet."}</p>
                     </div>
                 </div>
+
                 <DialogFooter>
                     <DialogClose asChild>
                         <Button type="button" variant="outline">Close</Button>
