@@ -55,7 +55,7 @@ export default function SignUpPage() {
         </div>
         
         {/* Advanced Roles */}
-        <div className="fixed top-[40%] right-4 -translate-y-1/2">
+        <div className="fixed top-1/2 right-4 -translate-y-1/2">
             <DropdownMenu>
                 <Tooltip>
                     <TooltipTrigger asChild>
