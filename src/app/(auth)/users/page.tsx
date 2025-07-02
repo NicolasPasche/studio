@@ -69,6 +69,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { cn } from '@/lib/utils';
 import { UserPlus, Shield, Briefcase, UserCog, Users, Code, MoreHorizontal, Trash2, Lock, Unlock, Copy } from 'lucide-react';
 
 type DisplayUser = {
@@ -346,14 +347,27 @@ export default function UserManagementPage() {
               ) : (
                   users.map((user) => {
                     const isCurrentUser = currentUser?.email === user.email;
+                    const canAdminRestrict = currentUser?.role === 'admin' && user.role !== 'dev' && !isCurrentUser;
                     return (
                       <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.name}</TableCell>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>
-                            <Badge variant={user.disabled ? "destructive" : "default"} className={!user.disabled ? "bg-accent text-accent-foreground" : ""}>
-                                {user.disabled ? "Restricted" : "Active"}
-                            </Badge>
+                            {canAdminRestrict ? (
+                                <button
+                                    onClick={() => handleRestrictClick(user)}
+                                    className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    aria-label={`Change status for ${user.name}`}
+                                >
+                                    <Badge variant={user.disabled ? "destructive" : "default"} className={cn(!user.disabled && "bg-accent text-accent-foreground", "cursor-pointer")}>
+                                        {user.disabled ? "Restricted" : "Active"}
+                                    </Badge>
+                                </button>
+                            ) : (
+                                <Badge variant={user.disabled ? "destructive" : "default"} className={!user.disabled ? "bg-accent text-accent-foreground" : ""}>
+                                    {user.disabled ? "Restricted" : "Active"}
+                                </Badge>
+                            )}
                           </TableCell>
                           <TableCell>
                           {user.role === 'dev' ? (
@@ -389,7 +403,7 @@ export default function UserManagementPage() {
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
                                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                      {realUser?.role === 'admin' && (
+                                      {currentUser?.role === 'admin' && (
                                         <DropdownMenuItem
                                             onClick={() => handleRestrictClick(user)}
                                             disabled={user.role === 'dev' || isCurrentUser}
@@ -401,7 +415,7 @@ export default function UserManagementPage() {
                                             )}
                                         </DropdownMenuItem>
                                       )}
-                                      {realUser?.role === 'dev' && (
+                                      {currentUser?.role === 'dev' && (
                                           <DropdownMenuItem
                                               className="text-destructive"
                                               onClick={() => handleDeleteClick(user)}
