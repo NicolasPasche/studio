@@ -364,7 +364,7 @@ export default function UserManagementPage() {
                 Invite, view, and manage user roles across the application.
               </CardDescription>
             </div>
-            {realUser?.role === 'admin' && <InviteUserDialog onUserInvited={fetchUsers} />}
+            {currentUser?.role === 'admin' && <InviteUserDialog onUserInvited={fetchUsers} />}
           </div>
         </CardHeader>
         <CardContent>
@@ -411,7 +411,7 @@ export default function UserManagementPage() {
                               <Select
                                   value={user.role}
                                   onValueChange={(newRole) => handleRoleChange(user.id, user.email, newRole as UserRole)}
-                                  disabled={isCurrentUser || realUser?.role !== 'admin'}
+                                  disabled={isCurrentUser || currentUser?.role !== 'admin'}
                               >
                                   <SelectTrigger className="w-full">
                                       <SelectValue placeholder="Select role" />
@@ -435,7 +435,7 @@ export default function UserManagementPage() {
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
                                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                      {realUser?.role === 'admin' && (
+                                      {currentUser?.role === 'admin' && (
                                         <DropdownMenuItem
                                             onClick={() => handleRestrictClick(user)}
                                             disabled={user.role === 'dev' || isCurrentUser}
@@ -447,7 +447,7 @@ export default function UserManagementPage() {
                                             )}
                                         </DropdownMenuItem>
                                       )}
-                                      {realUser?.role === 'dev' && (
+                                      {currentUser?.role === 'dev' && (
                                           <DropdownMenuItem
                                               className="text-destructive"
                                               onClick={() => handleDeleteClick(user)}
