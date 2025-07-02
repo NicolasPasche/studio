@@ -20,10 +20,11 @@ import {Icons} from '@/components/icons';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {AlertTriangle, Loader2} from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { developerEmails } from '@/lib/dev-accounts';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -41,7 +42,24 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Get the latest user data
+      await user.reload();
+
+      const isDev = developerEmails.includes(user.email || '');
+
+      if (!user.emailVerified && !isDev) {
+        setError("Please verify your email address before logging in. We've sent a link to your inbox.");
+        await auth.signOut();
+        setLoading(false);
+        return;
+      }
+      
+      // Let the AuthProvider handle the redirect
+      // The useEffect hook will catch the user state change and redirect.
+
     } catch (err: any) {
       console.error('Firebase Auth Error:', err);
       let message;
@@ -63,9 +81,15 @@ export default function LoginPage() {
           message = `An unexpected error occurred: ${err.message}`;
       }
       setError(message);
-      setLoading(false);
+    } finally {
+        if (!auth.currentUser || !auth.currentUser.emailVerified) {
+             setLoading(false);
+        }
     }
   };
+  
+  // Disable form if auth is still loading to prevent race conditions
+  const isFormDisabled = loading || authLoading;
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 animated-background">
@@ -95,6 +119,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isFormDisabled}
               />
             </div>
             <div className="space-y-2">
@@ -111,6 +136,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                disabled={isFormDisabled}
               />
             </div>
           </CardContent>
@@ -118,7 +144,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading}
+              disabled={isFormDisabled}
             >
               {loading ? (
                   <>

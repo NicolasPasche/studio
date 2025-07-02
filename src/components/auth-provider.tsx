@@ -41,10 +41,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 variant: "destructive",
                 title: "Email Verification Required",
                 description: "Please check your inbox and verify your email address before logging in.",
+                duration: 5000,
             });
             await signOut(auth);
             setRealUser(null);
             setLoading(false);
+            router.replace("/signup"); // Redirect to login page
             return; 
         }
 
@@ -83,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
           await signOut(auth);
           setRealUser(null);
-          router.replace("/");
+          router.replace("/signup");
         }
 
       } else {
