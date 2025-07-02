@@ -38,6 +38,7 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
     const [error, setError] = useState<React.ReactNode>('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [finalRole, setFinalRole] = useState<UserRole | null>(null);
 
     const handleSignUp = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -51,29 +52,34 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
             const user = userCredential.user;
 
             // 2. Determine the user's role
-            let finalRole: UserRole = roleToAssign || 'sales';
+            let determinedRole: UserRole = roleToAssign || 'sales';
             if (!roleToAssign) {
               const roleDocRef = doc(db, "user_roles", email);
               const roleDocSnap = await getDoc(roleDocRef);
               if (roleDocSnap.exists()) {
-                  finalRole = roleDocSnap.data().role as UserRole;
+                  determinedRole = roleDocSnap.data().role as UserRole;
               }
             }
+            setFinalRole(determinedRole);
             
             // 3. Create their user record in the database
             await setDoc(doc(db, "users", user.uid), {
                name: name,
                email: email,
-               role: finalRole,
+               role: determinedRole,
                createdAt: serverTimestamp(),
-               emailVerified: user.emailVerified, // Will be false
+               emailVerified: false,
             });
 
             // 4. Send the verification email.
             await sendEmailVerification(user);
 
-            // 5. Sign the user out until they verify
-            await signOut(auth);
+            // 5. For non-dev users, sign them out until they verify their email.
+            // Dev users are kept logged in for a smoother experience and will be
+            // redirected to the dashboard by the AuthProvider.
+            if (determinedRole !== 'dev') {
+                await signOut(auth);
+            }
 
             // 6. Show the success message
             setSuccess(true);
@@ -120,9 +126,13 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
             setLoading(false);
         }
     };
-
-    const successMessage = "Your account has been created. We've sent a verification link to your email. Please check your inbox (and spam folder!) and click the link to activate your account before you can sign in.";
-
+    
+    const isDevSignUp = finalRole === 'dev';
+    const successMessage = isDevSignUp
+      ? "Your developer account has been created. You will be redirected to the dashboard. A verification link has also been sent to your email for your records."
+      : "Your account has been created. We've sent a verification link to your email. Please check your inbox (and spam folder!) and click the link to activate your account before you can sign in.";
+    
+    const successTitle = isDevSignUp ? "Account Created & Logged In" : "Verification Email Sent";
 
     return (
         <Card className="w-full max-w-sm shadow-2xl animate-fade-in">
@@ -137,13 +147,16 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                 <CardContent className="space-y-4">
                     <Alert variant="default" className="border-green-500/50 bg-green-500/10">
                         <CheckCircle className="h-4 w-4 text-green-500" />
-                        <AlertTitle className="text-green-600">Verification Email Sent</AlertTitle>
+                        <AlertTitle className="text-green-600">{successTitle}</AlertTitle>
                         <AlertDescription>
                            {successMessage}
                         </AlertDescription>
                     </Alert>
-                    <Button onClick={() => router.push('/signup')} className="w-full">
-                        Proceed to Sign In
+                     <Button 
+                        onClick={() => router.push(isDevSignUp ? '/dashboard' : '/signup')} 
+                        className="w-full"
+                    >
+                        {isDevSignUp ? 'Go to Dashboard' : 'Proceed to Sign In'}
                     </Button>
                 </CardContent>
             ) : (
