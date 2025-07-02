@@ -55,12 +55,12 @@ export default function SignUpPage() {
         </div>
         
         {/* Advanced Roles */}
-        <div className="fixed top-1/2 right-4 -translate-y-1/2">
+        <div className="fixed top-[40%] right-4 -translate-y-1/2">
             <DropdownMenu>
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" className="rounded-full h-8 w-8">
+                            <Button variant="outline" className="h-10 w-6 p-1 gap-0">
                                 <ChevronLeft className="h-3.5 w-3.5" />
                                 <span className="sr-only">Advanced sign-up options</span>
                             </Button>
