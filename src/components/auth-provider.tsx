@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useState, useEffect, ReactNode, useMemo } from "react";
+import React, { createContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser, signOut, updateProfile } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
@@ -13,6 +13,7 @@ export interface AuthContextType {
   realUser: User | null;
   loading: boolean;
   setImpersonatedRole: (role: UserRole | null) => void;
+  updateUser: (newUserData: Partial<User>) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +25,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
 
+  const updateUser = useCallback((newUserData: Partial<User>) => {
+    setRealUser(prevUser => {
+        if (!prevUser) return null;
+        return { ...prevUser, ...newUserData };
+    });
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       setLoading(true);
@@ -32,20 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         await firebaseUser.reload(); // Get the latest user data
 
-        if (!firebaseUser.emailVerified) {
-            toast({
-                variant: "destructive",
-                title: "Email Verification Required",
-                description: "Please check your inbox and verify your email address before logging in.",
-                duration: 5000,
-            });
-            await signOut(auth);
-            setRealUser(null);
-            setLoading(false);
-            router.replace("/signup");
-            return; 
-        }
-
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         let userDocSnap = await getDoc(userDocRef);
 
@@ -53,26 +47,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!userDocSnap.exists()) {
             try {
                 const userEmail = firebaseUser.email!;
+                
+                // For regular users, an admin must have pre-registered their role.
+                const roleDocRef = doc(db, 'user_roles', userEmail);
+                const roleDocSnap = await getDoc(roleDocRef);
+
+                if (!roleDocSnap.exists()) {
+                  // If the role doesn't exist, this is an unauthorized sign-up.
+                  toast({
+                    variant: "destructive",
+                    title: "Access Denied",
+                    description: "Your email has not been invited. Please contact an administrator.",
+                  });
+                  await firebaseUser.delete(); // Delete the unauthorized auth user.
+                  await signOut(auth);
+                  setRealUser(null);
+                  setLoading(false);
+                  return;
+                }
+                
+                const finalRole = roleDocSnap.data().role as UserRole;
                 const displayName = firebaseUser.displayName || userEmail.split('@')[0];
-                
-                const nameParts = displayName.split('__');
-                const cleanedName = nameParts[0];
-                const finalRole = (nameParts.length > 1 ? nameParts[1] : 'sales') as UserRole;
-                
+
                 const newUserRecord = {
-                    name: cleanedName,
+                    name: displayName,
                     email: userEmail,
                     role: finalRole,
                     createdAt: serverTimestamp(),
-                    emailVerified: true,
+                    emailVerified: true, // They must be verified to get here
                     disabled: false,
                 };
                 
                 await setDoc(userDocRef, newUserRecord);
-
-                // Clean up the display name in Firebase Auth profile
-                if (displayName !== cleanedName) {
-                    await updateProfile(firebaseUser, { displayName: cleanedName });
+                
+                // If the user's display name had a role suffix, clean it up.
+                if (firebaseUser.displayName?.includes('__')) {
+                   await updateProfile(firebaseUser, { displayName });
                 }
 
                 userDocSnap = await getDoc(userDocRef); // Re-fetch the snapshot
@@ -109,10 +119,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           const userRole = dbData.role as UserRole;
           const userDataFromDb: User = {
+            uid: firebaseUser.uid,
             name: dbData.name,
             email: dbData.email,
             role: userRole,
-            avatar: mockUsers[userRole]?.avatar || "",
+            avatar: dbData.avatar || firebaseUser.photoURL || mockUsers[userRole]?.avatar || "",
             initials: (dbData.name || "").substring(0, 2).toUpperCase(),
             emailVerified: dbData.emailVerified,
             disabled: dbData.disabled || false,
@@ -139,9 +150,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useMemo(() => {
     if (impersonatedRole && realUser?.role === 'dev') {
         return {
-            ...mockUsers[impersonatedRole],
-            email: realUser.email,
-            name: realUser.name,
+            ...realUser,
+            role: impersonatedRole,
         };
     }
     return realUser;
@@ -149,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, realUser, loading, setImpersonatedRole }}>
+    <AuthContext.Provider value={{ user, realUser, loading, setImpersonatedRole, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

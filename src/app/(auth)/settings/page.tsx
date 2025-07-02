@@ -16,20 +16,26 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { storage, db, auth } from "@/lib/firebase";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, updateDoc } from "firebase/firestore";
+import { updateProfile } from "firebase/auth";
 
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { toast } = useToast();
 
   const [isPushEnabled, setIsPushEnabled] = useState(false);
   const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
   const [isPushLoading, setIsPushLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const syncPermissions = useCallback(() => {
     if (!('Notification' in window)) {
@@ -41,6 +47,52 @@ export default function SettingsPage() {
     setIsPushEnabled(currentPermission === 'granted');
     setIsPushLoading(false);
   }, []);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !auth.currentUser) return;
+
+    // Validate file type
+    if (!['image/png', 'image/jpeg'].includes(file.type)) {
+        toast({
+            variant: "destructive",
+            title: "Invalid File Type",
+            description: "Please select a PNG or JPG image.",
+        });
+        return;
+    }
+
+    setIsUploading(true);
+    try {
+        const avatarRef = storageRef(storage, `avatars/${auth.currentUser.uid}`);
+        const snapshot = await uploadBytes(avatarRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        // Update user's auth profile
+        await updateProfile(auth.currentUser, { photoURL: downloadURL });
+        
+        // Update user's document in Firestore
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userDocRef, { avatar: downloadURL });
+
+        // Update local state via context to reflect change immediately
+        updateUser({ avatar: downloadURL });
+
+        toast({
+            title: "Profile Photo Updated",
+            description: "Your new photo has been saved.",
+        });
+    } catch (error) {
+        console.error("Error uploading photo:", error);
+        toast({
+            variant: "destructive",
+            title: "Upload Failed",
+            description: "There was an error updating your photo. Please try again.",
+        });
+    } finally {
+        setIsUploading(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -143,7 +195,24 @@ export default function SettingsPage() {
                     <AvatarImage src={user.avatar} />
                     <AvatarFallback>{user.initials}</AvatarFallback>
                 </Avatar>
-                <Button>Change Photo</Button>
+                <input 
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                  accept="image/png, image/jpeg"
+                  disabled={isUploading}
+                />
+                <Button onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Changing...
+                    </>
+                  ) : (
+                    'Change Photo'
+                  )}
+                </Button>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">

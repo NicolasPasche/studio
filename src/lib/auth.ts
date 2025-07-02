@@ -2,6 +2,7 @@
 export type UserRole = "sales" | "admin" | "proposal" | "hr" | "dev";
 
 export interface User {
+  uid: string;
   name: string;
   email: string;
   role: UserRole;
@@ -13,6 +14,7 @@ export interface User {
 
 export const users: Record<UserRole, User> = {
   sales: {
+    uid: "mock-sales-uid",
     name: "Alex Johnson",
     email: "sales@example.com",
     role: "sales",
@@ -22,6 +24,7 @@ export const users: Record<UserRole, User> = {
     disabled: false,
   },
   admin: {
+    uid: "mock-admin-uid",
     name: "Maria Garcia",
     email: "admin@example.com",
     role: "admin",
@@ -31,6 +34,7 @@ export const users: Record<UserRole, User> = {
     disabled: false,
   },
   proposal: {
+    uid: "mock-proposal-uid",
     name: "David Chen",
     email: "proposal@example.com",
     role: "proposal",
@@ -40,6 +44,7 @@ export const users: Record<UserRole, User> = {
     disabled: false,
   },
   hr: {
+    uid: "mock-hr-uid",
     name: "Sarah Lee",
     email: "hr@example.com",
     role: "hr",
@@ -49,6 +54,7 @@ export const users: Record<UserRole, User> = {
     disabled: false,
   },
   dev: {
+    uid: "mock-dev-uid",
     name: "Dev User",
     email: "nicolas.pasche@proton.me",
     role: "dev",
