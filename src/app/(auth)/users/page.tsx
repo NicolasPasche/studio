@@ -313,7 +313,7 @@ export default function UserManagementPage() {
                 Invite, view, and manage user roles across the application.
               </CardDescription>
             </div>
-            <InviteUserDialog onUserInvited={fetchUsers} />
+            {realUser?.role === 'admin' && <InviteUserDialog onUserInvited={fetchUsers} />}
           </div>
         </CardHeader>
         <CardContent>
