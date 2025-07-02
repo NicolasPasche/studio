@@ -6,6 +6,9 @@ import {
   DialogContent,
   DialogFooter,
   DialogClose,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -27,16 +30,16 @@ export function UserProfileDialog({ user, isOpen, onOpenChange }: { user: Profil
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
-                <div className="flex items-center space-x-4">
+                <DialogHeader className="flex-row items-center space-x-4 space-y-0 text-left">
                     <Avatar className="h-20 w-20 flex-shrink-0">
                         <AvatarImage src={user.avatar} />
                         <AvatarFallback>{user.initials}</AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
-                        <h2 className="text-2xl font-semibold leading-none tracking-tight">{user.name}</h2>
-                        <p className="text-sm text-muted-foreground">{roleDisplayNames[user.role]}</p>
+                        <DialogTitle className="text-2xl font-semibold leading-none tracking-tight">{user.name}</DialogTitle>
+                        <DialogDescription>{roleDisplayNames[user.role]}</DialogDescription>
                     </div>
-                </div>
+                </DialogHeader>
 
                 <div className="pt-2">
                     <Separator />
