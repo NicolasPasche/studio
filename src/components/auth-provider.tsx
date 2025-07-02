@@ -4,7 +4,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser, signOut } from "firebase/auth";
-import { collection, query, where, getDocs, limit, doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { User, UserRole, users as mockUsers } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -31,11 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setImpersonatedRole(null); // Reset impersonation on auth state change
 
-      if (firebaseUser && firebaseUser.email) {
+      if (firebaseUser) {
         await firebaseUser.reload(); // Get the latest user data
 
-        // This check is now the single source of truth for allowing access.
-        // It applies to all users, including developers.
         if (!firebaseUser.emailVerified) {
             toast({
                 variant: "destructive",
@@ -46,57 +44,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await signOut(auth);
             setRealUser(null);
             setLoading(false);
-            router.replace("/signup"); // Redirect to login page
+            router.replace("/signup");
             return; 
         }
 
-        const isDev = developerEmails.includes(firebaseUser.email);
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("email", "==", firebaseUser.email), limit(1));
-        const querySnapshot = await getDocs(q);
-        const userDocSnap = querySnapshot.docs.length > 0 ? querySnapshot.docs[0] : null;
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        let userDocSnap = await getDoc(userDocRef);
 
-        if (isDev) {
-            const name = userDocSnap ? userDocSnap.data().name : "Developer";
-            setRealUser({
-                name: name,
-                email: firebaseUser.email,
-                role: 'dev',
-                avatar: mockUsers.dev.avatar,
-                initials: name.substring(0, 2).toUpperCase(),
-                emailVerified: true,
-            });
-        } else if (userDocSnap) {
+        // If user document doesn't exist, create it. This is their first login.
+        if (!userDocSnap.exists()) {
+            try {
+                const userEmail = firebaseUser.email!;
+                const userName = firebaseUser.displayName || userEmail.split('@')[0];
+                
+                // Determine role from 'user_roles' (invite system) or default
+                let determinedRole: UserRole = 'sales'; // Default role
+                
+                // For dev accounts, ensure role is 'dev'
+                if (developerEmails.includes(userEmail)) {
+                    determinedRole = 'dev';
+                } else {
+                    const roleDocRef = doc(db, "user_roles", userEmail);
+                    const roleDocSnap = await getDoc(roleDocRef);
+                    if (roleDocSnap.exists()) {
+                        determinedRole = roleDocSnap.data().role as UserRole;
+                    }
+                }
+                
+                const newUserRecord = {
+                    name: userName,
+                    email: userEmail,
+                    role: determinedRole,
+                    createdAt: serverTimestamp(),
+                    emailVerified: true,
+                };
+                
+                await setDoc(userDocRef, newUserRecord);
+                userDocSnap = await getDoc(userDocRef); // Re-fetch the snapshot
+            } catch (error) {
+                console.error("Failed to create user document in Firestore:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Account Setup Failed",
+                    description: "Could not create your user profile. Please contact an administrator.",
+                });
+                await signOut(auth);
+                setRealUser(null);
+                setLoading(false);
+                return;
+            }
+        }
+        
+        // By now, the document should exist.
+        if (userDocSnap.exists()) {
           const dbData = userDocSnap.data();
 
           // Sync email verification status from Auth to Firestore
           if (firebaseUser.emailVerified && !dbData.emailVerified) {
-            const userDocRef = doc(db, 'users', userDocSnap.id);
             await updateDoc(userDocRef, { emailVerified: true });
-            dbData.emailVerified = true; // Update local data to avoid stale state
+            dbData.emailVerified = true;
           }
           
           const userRole = dbData.role as UserRole;
           const userDataFromDb: User = {
-            name: dbData.name || firebaseUser.displayName || firebaseUser.email,
-            email: firebaseUser.email,
+            name: dbData.name,
+            email: dbData.email,
             role: userRole,
             avatar: mockUsers[userRole]?.avatar || "",
-            initials: (dbData.name || firebaseUser.displayName || firebaseUser.email).substring(0, 2).toUpperCase(),
-            emailVerified: dbData.emailVerified || false,
+            initials: (dbData.name || "").substring(0, 2).toUpperCase(),
+            emailVerified: dbData.emailVerified,
           };
           setRealUser(userDataFromDb);
         } else {
           toast({
             variant: "destructive",
             title: "Access Denied",
-            description: "Your user account is not fully configured. Please contact an administrator.",
+            description: "Could not find your user profile. Please contact an administrator.",
           });
           await signOut(auth);
           setRealUser(null);
-          router.replace("/signup");
         }
-
       } else {
         setRealUser(null);
       }

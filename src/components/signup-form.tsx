@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateProfile } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { UserRole } from "@/lib/auth";
@@ -50,33 +50,16 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // 2. Send the verification email IMMEDIATELY after user creation in Auth.
-            // This is critical to ensure the user receives the email even if a DB write fails.
+            // 2. Set their display name in their auth profile, so we can use it on first login.
+            await updateProfile(user, { displayName: name });
+
+            // 3. Send the verification email.
             await sendEmailVerification(user);
             
-            // 3. Determine the user's role
-            let determinedRole: UserRole = roleToAssign || 'sales';
-            if (!roleToAssign) {
-              const roleDocRef = doc(db, "user_roles", email);
-              const roleDocSnap = await getDoc(roleDocRef);
-              if (roleDocSnap.exists()) {
-                  determinedRole = roleDocSnap.data().role as UserRole;
-              }
-            }
-            
-            // 4. Create their user record in the database
-            await setDoc(doc(db, "users", user.uid), {
-               name: name,
-               email: email,
-               role: determinedRole,
-               createdAt: serverTimestamp(),
-               emailVerified: false,
-            });
-
-            // 5. Sign the user out so they must verify their email before logging in.
+            // 4. Sign the user out so they must verify their email before logging in.
             await signOut(auth);
 
-            // 6. Show the success message
+            // 5. Show the success message
             setSuccess(true);
 
         } catch (err: any) {
@@ -101,17 +84,6 @@ export function SignUpForm({ title, description, roleToAssign, showLoginLink = t
                     break;
                 case 'auth/weak-password':
                     message = "The password is too weak. Please use at least 6 characters.";
-                    break;
-                case 'auth/network-request-failed':
-                case 'auth/invalid-api-key':
-                case 'auth/api-key-not-valid':
-                case 'auth/app-deleted':
-                case 'auth/invalid-app-credential':
-                    message = "Network error or invalid configuration. Please check your internet connection and Firebase project setup in `src/lib/firebase.ts`.";
-                    break;
-                 case 'permission-denied':
-                 case 'auth/insufficient-permission':
-                    message = "An unexpected error occurred: Missing or insufficient permissions. This may happen if Firestore rules are not set correctly.";
                     break;
                 default:
                     message = `An unexpected error occurred: ${err.message}`;
