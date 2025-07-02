@@ -32,19 +32,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setImpersonatedRole(null); // Reset impersonation on auth state change
 
       if (firebaseUser && firebaseUser.email) {
+        await firebaseUser.reload(); // Get the latest user data
         const isDev = developerEmails.includes(firebaseUser.email);
-        
-        // Query for user document by email
+
+        // Security Check: If not a dev and email is not verified, deny access.
+        if (!isDev && !firebaseUser.emailVerified) {
+            // No toast needed here, login page will handle the message.
+            // This just prevents a session from being established.
+            await signOut(auth);
+            setRealUser(null);
+            setLoading(false);
+            return; 
+        }
+
+        // If we get here, user is verified or is a developer. Proceed.
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("email", "==", firebaseUser.email), limit(1));
         const querySnapshot = await getDocs(q);
-        
         const userDocSnap = querySnapshot.docs.length > 0 ? querySnapshot.docs[0] : null;
 
         if (isDev) {
-            // For developers, we can construct their user object without relying
-            // on the Firestore doc necessarily existing. This helps with local setup.
-            // We'll still prefer the name from Firestore if it's there.
             const name = userDocSnap ? userDocSnap.data().name : "Developer";
             setRealUser({
                 name: name,
@@ -54,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 initials: name.substring(0, 2).toUpperCase(),
             });
         } else if (userDocSnap) {
-          // This is a regular user. Their document must exist in Firestore.
           const dbData = userDocSnap.data();
           const userRole = dbData.role as UserRole;
 
@@ -67,8 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setRealUser(userDataFromDb);
         } else {
-          // Regular user is authenticated but has no document in the 'users' collection.
-          // This is an invalid state. Deny access.
           toast({
             variant: "destructive",
             title: "Access Denied",
@@ -92,7 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (impersonatedRole && realUser?.role === 'dev') {
         return {
             ...mockUsers[impersonatedRole],
-            // Keep original dev user's email for display if needed
             email: realUser.email,
             name: realUser.name,
         };
