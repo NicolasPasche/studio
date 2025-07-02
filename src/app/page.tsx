@@ -60,7 +60,7 @@ export default function SignUpPage() {
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="h-12 w-6 p-1 gap-0">
+                            <Button variant="ghost" className="h-10 w-5 p-0 gap-0 opacity-50 hover:opacity-100">
                                 <ChevronLeft className="h-3.5 w-3.5" />
                                 <span className="sr-only">Advanced sign-up options</span>
                             </Button>
