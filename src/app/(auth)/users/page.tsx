@@ -9,6 +9,7 @@ import {
   updateDoc,
   addDoc,
   serverTimestamp,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { User, UserRole, roleDisplayNames } from '@/lib/auth';
@@ -27,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,23 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -49,7 +67,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { UserPlus, Shield, Briefcase, UserCog, Users, Code } from 'lucide-react';
+import { UserPlus, Shield, Briefcase, UserCog, Users, Code, MoreHorizontal, Trash2 } from 'lucide-react';
 
 type DisplayUser = {
   id: string; // Firebase Auth UID
@@ -173,6 +191,8 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const { user: currentUser, realUser } = useAuth();
   const { toast } = useToast();
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<DisplayUser | null>(null);
   
   const fetchUsers = async () => {
     setLoading(true);
@@ -236,6 +256,52 @@ export default function UserManagementPage() {
     }
   };
 
+  const handleDeleteClick = (user: DisplayUser) => {
+    setUserToDelete(user);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete || !realUser) {
+        toast({ variant: "destructive", title: "Error", description: "Cannot delete user. Missing information." });
+        setIsDeleteAlertOpen(false);
+        return;
+    }
+
+    try {
+        const userDocRef = doc(db, "users", userToDelete.id);
+        const userRoleDocRef = doc(db, "user_roles", userToDelete.email);
+
+        await deleteDoc(userDocRef);
+        await deleteDoc(userRoleDocRef);
+
+        await addDoc(collection(db, 'activities'), {
+            type: 'User Deleted',
+            description: `User ${userToDelete.name} (${userToDelete.email}) was deleted.`,
+            timestamp: serverTimestamp(),
+            userId: realUser.email,
+            userName: realUser.name,
+        });
+
+        toast({
+            title: "User Deleted",
+            description: `${userToDelete.name} has been successfully deleted.`
+        });
+
+        setUsers(prevUsers => prevUsers.filter(u => u.id !== userToDelete.id));
+        setUserToDelete(null);
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: "Could not delete the user. Please try again."
+        });
+    } finally {
+        setIsDeleteAlertOpen(false);
+    }
+  };
+
   return (
     <>
       <Card>
@@ -257,16 +323,19 @@ export default function UserManagementPage() {
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead className="w-[220px]">Role</TableHead>
+                <TableHead className="text-right">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                   <TableRow>
-                      <TableCell colSpan={3} className="text-center">Loading users...</TableCell>
+                      <TableCell colSpan={4} className="text-center">Loading users...</TableCell>
                   </TableRow>
               ) : users.length === 0 ? (
                   <TableRow>
-                      <TableCell colSpan={3} className="text-center h-24">No users found.</TableCell>
+                      <TableCell colSpan={4} className="text-center h-24">No users found.</TableCell>
                   </TableRow>
               ) : (
                   users.map((user) => {
@@ -299,6 +368,29 @@ export default function UserManagementPage() {
                               </Select>
                           )}
                           </TableCell>
+                          <TableCell className="text-right">
+                              {(realUser?.role === 'admin' || realUser?.role === 'dev') && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                            <span className="sr-only">Toggle menu</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem
+                                            className="text-destructive"
+                                            onClick={() => handleDeleteClick(user)}
+                                            disabled={realUser?.email === user.email || user.role === 'dev'}
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete User
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                          </TableCell>
                       </TableRow>
                     )
                   })
@@ -307,6 +399,21 @@ export default function UserManagementPage() {
           </Table>
         </CardContent>
       </Card>
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the user record
+                        for {userToDelete?.name} and remove their role assignment.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setUserToDelete(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmDelete} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </>
   );
 }
